@@ -6,8 +6,10 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { AuthContext } from "./AuthContext";
 import { GoogleLogin } from '@react-oauth/google';
+import toast from "react-hot-toast";
 
 import { jwtDecode } from "jwt-decode";
+
 
 
 function Login() {
@@ -44,8 +46,44 @@ function Login() {
         console.error(err);
       });
   };
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      const { credential } = credentialResponse;
+      const decoded = jwtDecode(credential);
+      console.log("Decoded Google User:", decoded);
 
+      const res = await axios.post("http://localhost:3001/google-signup", {
+        token: credential,
+      });
+
+      if (res.data.message === "success") {
+        const { token, user } = res.data;
+        const userData = {
+          Name: user.Name,
+          Email: user.Email,
+          Number: user.Number || "",
+          id: user._id,
+          ProfilePic: user.ProfilePic || "",
+        };
+        login(token, userData);
+        navigate("/account", {state: userData});
+        toast.success("Google Sign-Up successful!");
+      } else {
+        toast.error(res.data.message || "Google Sign-Up failed!");
+      }
+    } catch (error) {
+      console.error("Google Sign-Up error:", error);
+      toast.error("Google Sign-Up failed!");
+    }
+  };
+
+  const handleGoogleFailure = () => {
+    console.log('Google Sign-In was unsuccessful.');
+    toast.error("Google Sign-In failed!");
+  };
   return (
+    <>
+
     <form className="box" onSubmit={loginsubmitHandler}>
     <h1 className="text-center mb-10 text-5xl">Login</h1>
     <div className="input">
@@ -80,21 +118,14 @@ function Login() {
       <p className="ml-8 mt-1">Or <Link to="/ChangePassword">Forgot Password?</Link></p>
     </p>
     
-    <div className="flex justify-center mt-4">
-      <GoogleLogin
-        onSuccess={credentialResponse => {
-          const credentialResponseD =jwtDecode(credentialResponse.credential)
-          console.log(credentialResponseD);
-          console.log(credentialResponseD.iss);
-          console.log(credentialResponseD.picture);
-
-        }}
-        onError={() => {
-          console.log('Login Failed');
-        }}
-      />
-    </div>
+     <div className="flex justify-center mt-6">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleFailure}
+              />
+            </div>
   </form>
+  </>
 
   );
 }

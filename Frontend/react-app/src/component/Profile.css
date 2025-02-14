@@ -1,0 +1,175 @@
+/* User Profile Icon */
+.user {
+    cursor: pointer;
+    background-color: #a0a0a0;
+    border-radius: 50%;
+    border: 1px solid black;
+    height: 47px;
+    width: 47px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Body Styling */
+  body {
+    font-family: sans-serif;
+    margin: 0;
+    padding: 0;
+    color: #333;
+  }
+  
+  /* Dropdown Container */
+  .Ucontainer {
+    width: 200px;
+    background: white;
+    padding: 30px 20px;
+    color: black;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    display: none;
+    position: absolute;
+    right: 10px;  /* Aligns the container to the right */
+    top: 85px;
+    z-index: 1;
+    border-radius: 8px;
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  
+  .Ucontainer.show {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  
+  /* Dropdown Title */
+  .Ucontainer > h1 {
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #444;
+  }
+  
+  /* List Styling */
+  .Uitem > ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  /* List Item Styling */
+  .Uitem > li {
+    margin-bottom: 10px;
+    padding: 10px 20px;
+    border-radius: 5px;
+    background-color: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s, transform 0.3s ease;
+  }
+  
+  .Uitem > li:hover {
+    background-color: #f1f1f1;
+    transform: translateX(5px);
+  }
+  
+  /* Icon and Text Alignment */
+  .Uitem > i {
+    margin-right: 15px;
+    font-size: 1.5rem;
+    color: #333;
+  }
+  
+  .Uitem > a {
+    text-decoration: none;
+    color: #333;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    transition: color 0.3s ease;
+  }
+  
+  .Uitemp:hover {
+    color: #e60000;
+  }
+  
+  .Uitemp {
+    font-size: 20px;
+    font-weight: 600;
+    margin-left: 10px;
+    color: #333;
+  }
+  
+  a > svg {
+    font-size: 22px;
+    color: #333;
+    transition: color 0.3s ease;
+  }
+  
+  .Uitem > a:hover > svg {
+    color: #e60000;
+  }
+  
+  /* Logout Button */
+  .logout-button {
+    display: flex;
+    margin-top: 20px;
+    padding: 10px 53px;
+    background-color: #e60000;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .logout-button:hover {
+    background-color: #cc0000;
+    transform: translateY(-2px);
+  }
+  
+  .logout-button:focus {
+    outline: none;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .Ucontainer {
+      width: 250px; /* Make dropdown smaller on mobile */
+      padding: 15px 0;
+      margin-right: 10px;
+      top: 50px;
+      left: 50%;
+      transform: translateX(-50%); /* Center container on mobile */
+    }
+  
+    .Uitem > li {
+      padding: 8px 15px; /* Adjust padding for smaller screens */
+    }
+  
+    .logout-button {
+      width: 100%; /* Make button take full width on mobile */
+      text-align: center;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .Ucontainer {
+      width: 200px; /* Further reduce the size on very small screens */
+    }
+  
+    .Uitem > li {
+      padding: 6px 12px;
+    }
+  
+    .logout-button {
+      padding: 8px 15px;
+    }
+  }
+  

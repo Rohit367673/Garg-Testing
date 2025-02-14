@@ -1,55 +1,106 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice } from '@reduxjs/toolkit';
 
-const initialState = {
-  cartItems: [],
-  subTotal: 0,
-  shipping: 0,
-  Total: 0,
-};
-export const cartSlice = createSlice({
-  name: "cart",
-  initialState,
+const cartSlice = createSlice({
+  name: 'cart',
+  initialState: {
+    cartId: null, // Initialize cartId as null
+    cartItems: [],
+    subTotal: 0,
+    shipping: 0,
+    Total: 0,
+  },
   reducers: {
-    addToCart: (state, action) => {
-      const value = action.payload;
-      const isItemExist = state.cartItems.find((i) => i.id === value.id);
-      if (isItemExist) {
-        state.cartItems.forEach((i) => {
-          if (i.id === value.id) i.quantity += 1;
-        });
-      } else {
-        state.cartItems.push(value);
+    // Initialize cartId if not already set
+    initializeCart: (state) => {
+      if (!state.cartId) {
+        state.cartId = Date.now().toString(); // Consider using UUID for a production system
       }
     },
-    decrement: (state, action) => {
-        const item=action.payload
-      const value = state.cartItems.find((i) => i.id === item.id);
-      if (value.quantity > 1) {
-        state.cartItems.forEach((i) => {
-          if (i.id === value.id) i.quantity -= 1;
-        });
-      }
-    },
-    deleteCart:(state,action)=>{
-      state.cartItems=state.cartItems.filter((i)=>i.id !== action.payload)
-    },
-    calculatePrice:(state)=>{
-        let sum=0
-        state.cartItems.forEach((i)=>(sum+= i.price*i.quantity));
-        state.subTotal=sum;
-        state.shipping=state.subTotal > 100 ? 20 :0
-        state.Total= state.subTotal+state.shipping
-         
-    
-      },
-      setCartItems:(state,action)=>{
-        state.cartItems=action.payload
-      },
 
-      
-  }
- 
-}
-);
-export const { addToCart, decrement ,deleteCart,calculatePrice,setCartItems} = cartSlice.actions;
+    addToCart: (state, action) => {
+      // Log payload to ensure it includes id, selectedSize, and selectedColor
+      console.log("Adding item with payload:", action.payload);
+
+      // Find an existing item that matches the same id, selectedSize, and selectedColor
+      const existingItemIndex = state.cartItems.findIndex(
+        (item) =>
+          item.id === action.payload.id &&
+          item.selectedSize === action.payload.selectedSize &&
+          item.selectedColor === action.payload.selectedColor
+      );
+
+      if (existingItemIndex !== -1) {
+        // Increase quantity if the same variant already exists
+        state.cartItems[existingItemIndex].quantity += 1;
+      } else {
+        // Otherwise, add the new variant to the cart
+        state.cartItems.push(action.payload);
+      }
+    },
+
+    increment: (state, action) => {
+      const { id, selectedSize, selectedColor } = action.payload;
+      const index = state.cartItems.findIndex(
+        (item) =>
+          item.id === id &&
+          item.selectedSize === selectedSize &&
+          item.selectedColor === selectedColor
+      );
+      if (index !== -1) {
+        state.cartItems[index].quantity += 1;
+      }
+    },
+
+    decrement: (state, action) => {
+      const { id, selectedSize, selectedColor } = action.payload;
+      const index = state.cartItems.findIndex(
+        (item) =>
+          item.id === id &&
+          item.selectedSize === selectedSize &&
+          item.selectedColor === selectedColor
+      );
+      if (index !== -1 && state.cartItems[index].quantity > 1) {
+        state.cartItems[index].quantity -= 1;
+      }
+    },
+
+    deleteCart: (state, action) => {
+      const { id, selectedSize, selectedColor } = action.payload;
+      state.cartItems = state.cartItems.filter(
+        (item) =>
+          !(item.id === id &&
+            item.selectedSize === selectedSize &&
+            item.selectedColor === selectedColor)
+      );
+    },
+
+    setCartItems: (state, action) => {
+      state.cartItems = action.payload;
+    },
+
+    calculatePrice: (state) => {
+      const subTotal = state.cartItems.reduce(
+        (acc, item) => acc + item.price * item.quantity,
+        0
+      );
+      state.subTotal = subTotal;
+      state.Total = subTotal + state.shipping;
+    },
+
+    setCartId: (state, action) => {
+      state.cartId = action.payload;
+    },
+  },
+});
+
+export const {
+  addToCart,
+  increment,
+  decrement,
+  deleteCart,
+  setCartItems,
+  calculatePrice,
+  initializeCart,
+  setCartId,
+} = cartSlice.actions;
 export default cartSlice.reducer;

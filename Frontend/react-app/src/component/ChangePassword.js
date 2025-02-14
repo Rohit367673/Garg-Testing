@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 
+
 function ChangePassword() {
   const [Email, setEmail] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
@@ -37,6 +38,8 @@ function ChangePassword() {
       });
   }
   return (
+    <>
+
     <form className="change-password-form" onSubmit={handlePasswordChange}>
       <h1>Change Password</h1>
       {error && <p className="error">{error}</p>}
@@ -82,6 +85,7 @@ function ChangePassword() {
      
 
     </form>
+    </>
   );
 }
 

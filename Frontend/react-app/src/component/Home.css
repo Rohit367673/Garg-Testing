@@ -1,0 +1,299 @@
+
+      /* CSS for Home Component */
+
+
+      .slider-container {
+        position: relative;
+        width: 100%;
+        height: 400px;
+        overflow: hidden;
+      }
+      
+      .slider {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .slider-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      
+      .controllers {
+        position: absolute;
+        top: 50%;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        transform: translateY(-50%);
+      }
+      
+      .prev-button, .next-button {
+        background-color: rgba(0, 0, 0, 0.5);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        font-size: 20px;
+        transition: background-color 0.3s ease;
+      }
+      
+      .prev-button:hover, .next-button:hover {
+        background-color: rgba(0, 0, 0, 0.8);
+      }
+      
+      .indicators {
+        position: absolute;
+        bottom: 10px;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+      }
+      
+      .indicator {
+        width: 10px;
+        height: 10px;
+        background-color: rgba(255, 255, 255, 0.5);
+        border-radius: 50%;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+      
+      .indicator.active {
+        background-color: white;
+      }
+      .Item-Image{
+    height: 400px;
+    width: 100%;
+    cursor: pointer;
+      
+      }
+       .Item-Image:hover{
+        transform: scale(1.1);
+        transition: transform 0.5s;}
+      .Item-Title{
+        display: flex;
+        justify-content: center;
+        font-size: 20px;
+        padding: 1rem 1rem;
+      }
+      .Branding-Container{
+        display: flex;
+        justify-content: center;
+        flex-direction: row;
+        padding: 1rem 1rem;
+        background-color: #f9fafc;
+      }
+      .Branding-Text{
+
+ margin-left: 9rem;
+        padding: 1rem 1rem;
+        font-size: 20px;
+      }
+      
+      .Branding-btn{
+        padding: 1rem 3rem;
+        font-size: 20px;
+ 
+        color: #f97316;
+        border: 1px solid  #f97316;
+       
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+      .Branding-btn:hover{
+        background-color: #f97316;
+        color: white;
+      }
+      .Branding-Image{
+        height: 100%;
+        width: 60%;
+      
+      }
+
+      /* CSS for Share Component */
+      .Share-Container {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 6rem;
+}
+
+.Share-Container h1 {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 20px 0 10px;
+  text-align: center;
+}
+
+.hashtag {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 30px;
+}
+
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr); /* 12-column grid system */
+  grid-auto-rows: 150px; /* Uniform row height */
+  gap: 10px;
+  max-width: 1200px;
+  padding: 20px;
+}
+
+/* Image alignment to replicate the given layout */
+.img1 { grid-column: 0 / 5; grid-row: 1 / 3; }
+.img2 { grid-column: 2 / 6; grid-row: 3 / 1; }
+.img3 { grid-column: 9 / 13; grid-row: 1 / 3; }
+.img4 { grid-column: 6 / 9; grid-row: 2 / 5; }
+.img5 { grid-column: 10 / 13; grid-row: 3 / 5; }
+.img6 { grid-column: 1 / 6; grid-row: 4 / 7;margin-top: -80px;  }
+.img7 { grid-column: 6 / 9; grid-row: 5 / 6; }
+.img8 { grid-column: 9 / 13; grid-row: 5 / 7; }
+
+.gallery img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile responsiveness for smaller screens */
+@media (max-width: 576px) {
+    .Branding-Text {
+      font-size: 14px;
+    }
+  
+    .Branding-Image {
+      width: 100%;
+    }
+  }
+  @media (max-width: 768px) {
+    .video-item {
+      width: 90%;
+      height: 250px;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .video-item {
+      width: 100%;
+      height: 200px;
+    }
+  }
+  @media (max-width: 576px) {
+    .slider-container {
+      height: 250px;
+    }
+  
+    .slider-image {
+      height: 250px;
+    }
+  
+    .controllers .prev-button,
+    .controllers .next-button {
+      padding: 5px;
+      font-size: 14px;
+    }
+  }  
+  @media (max-width: 768px) {
+    .Branding-Text{
+        margin-left: 0;
+    }
+    .slider-container {
+      height: 300px;
+    }
+  
+    .slider-image {
+      height: 300px;
+    }
+  
+    .controllers .prev-button,
+    .controllers .next-button {
+      padding: 5px 10px;
+      font-size: 16px;
+    }
+  }
+/* General container for the video items */
+
+.video-container {
+  display: flex;
+  padding: 0rem 1rem;
+justify-content: center;
+  gap: 50px;
+  margin-top: 30px;
+  flex-wrap: wrap; /* Ensure it wraps on smaller screens */
+}
+
+/* Style for each video item */
+.video-item {
+  position: relative;
+  width: 350px; /* Increased width for larger videos */
+  height: 350px; /* Increased height for larger videos */
+  overflow: hidden; /* Ensure no content overflows the image container */
+  border-radius: 15px; /* More rounded corners */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); /* Slightly deeper shadow */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer; /* Cursor pointer to indicate it's interactive */
+  background-color: #fff; /* White background for cleaner look */
+}
+
+/* Hover effect on the video item */
+.video-item:hover {
+  transform: scale(1.1); /* Enlarges the item slightly */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Darker shadow on hover */
+}
+
+/* Style for the image */
+.video-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Make sure the image covers the container */
+  border-radius: 15px;
+  transition: opacity 0.3s ease;
+}
+
+/* Style for the video player */
+.video-player {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  visibility: hidden; /* Hide the video initially */
+  border-radius: 15px; /* Match the rounded corners of the image */
+  transition: visibility 0.3s ease, opacity 0.3s ease;
+}
+
+/* Smooth opacity fade-in on hover */
+.video-item:hover .video-player {
+  visibility: visible; /* Make video visible when hovered */
+  opacity: 1;
+}
+@media (max-width: 576px) {
+  .slider-container {
+    height: 300px;
+  }
+
+  .Item-Image {
+    height: 300px;
+  }
+
+  .video-item {
+    width: 100%;
+    height: 250px;
+  }
+}

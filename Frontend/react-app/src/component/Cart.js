@@ -1,121 +1,207 @@
-import React, { useEffect } from 'react';
-import { AiFillDelete } from 'react-icons/ai';
-import { useSelector, useDispatch } from 'react-redux';
-import { addToCart, calculatePrice, decrement, deleteCart, setCartItems } from '../redux/CartSlice';
-import { Link } from 'react-router-dom';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  calculatePrice,
+  decrement,
+  deleteCart,
+  increment,
+} from "../redux/CartSlice";
+import { useNavigate } from "react-router-dom";
+import { Box, Grid, Typography, Button, IconButton } from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import Footer from "./Footer";
 
-function Cart() {
+const Cart = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const isLoginHandler = () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login', { replace: true });
-    } else {
-      axios.get('http://localhost:3001/verifyToken', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      .then(res => {
-        if (res.data.message === 'success') {
-          navigate('/Address', { replace: true });
-        } else {
-          navigate('/login', { replace: true });
-        }
-      })
-      .catch(err => {
-        console.error(err);
-        navigate('/login', { replace: true });
-      });
-    }
-  };
-
-  const saveToLocalStorage = (items) => {
-    localStorage.setItem('cartItems', JSON.stringify(items));
-  };
-
-  const incrementHandler = (id) => {
-    dispatch(addToCart({ id }));
-    dispatch(calculatePrice());
-  };
-
-  const decrementHandler = (id) => {
-    dispatch(decrement({ id }));
-    dispatch(calculatePrice());
-  };
-
-  const deleteHandler = (id) => {
-    dispatch(deleteCart(id));
-    dispatch(calculatePrice());
-  };
-
-  const { subTotal, Total, shipping, cartItems } = useSelector((state) => state.cart);
-
-  useEffect(() => {
-    const storedItems = localStorage.getItem('cartItems');
-    if (storedItems) {
-      dispatch(setCartItems(JSON.parse(storedItems)));
-      dispatch(calculatePrice());
-    }
-  }, [dispatch]);
-
-  useEffect(() => {
-    saveToLocalStorage(cartItems);
-  }, [cartItems]);
-
-  const CartItem = ({ imgsrc, name, id, qty, price, deleteHandler, increment, decrement }) => (
-    <div className="cartItem">
-      <img src={imgsrc} alt={name} />
-      <article>
-        <h3>{name}</h3>
-        <p className="ml-2">{price}Rs</p>
-      </article>
-      <div>
-        <button onClick={() => decrement(id)}>-</button>
-        <p>{qty}</p>
-        <button onClick={() => increment(id)}>+</button>
-      </div>
-      <AiFillDelete onClick={() => deleteHandler(id)} />
-    </div>
+  const { cartItems, subTotal, shipping, Total } = useSelector(
+    (state) => state.cart
   );
+
+  useEffect(() => {
+    dispatch(calculatePrice());
+  }, [cartItems, dispatch]);
+
+  const handleDelete = (id, selectedSize, selectedColor) => {
+    dispatch(deleteCart({ id, selectedSize, selectedColor }));
+  };
+
+  const handleDecrement = (id, selectedSize, selectedColor) => {
+    dispatch(decrement({ id, selectedSize, selectedColor }));
+  };
+
+  const handleIncrement = (id, selectedSize, selectedColor) => {
+    dispatch(increment({ id, selectedSize, selectedColor }));
+  };
+
+  const handleCheckout = () => {
+    if (cartItems.length > 0) {
+      navigate("/checkout");
+    } else {
+      alert("Your cart is empty!");
+    }
+  };
 
   return (
-    <div className="cart">
-      <main>
-        {cartItems.length > 0 ? (
-          cartItems.map((i) => (
-            <CartItem
-              key={i.id}
-              imgsrc={i.imgsrc}
-              name={i.name}
-              price={i.price}
-              qty={i.quantity}
-              id={i.id}
-              decrement={decrementHandler}
-              increment={incrementHandler}
-              deleteHandler={deleteHandler}
-            />
-          ))
+    <>
+      <Box sx={{ padding: 4, backgroundColor: "#f8f8f8", minHeight: "100vh" }}>
+        <Typography
+          variant="h4"
+          gutterBottom
+          textAlign="center"
+          color="text.primary"
+        >
+          Your Shopping Cart
+        </Typography>
+
+        {cartItems.length === 0 ? (
+          <Typography variant="h6" color="text.secondary" textAlign="center">
+            Your cart is empty.
+          </Typography>
         ) : (
-          <h1>No Item</h1>
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={8}>
+              {cartItems.map((item) => (
+                <Box
+                  key={`${item.id}-${item.selectedSize}-${item.selectedColor}`}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    backgroundColor: "white",
+                    padding: 2,
+                    borderRadius: 2,
+                    boxShadow: 1,
+                    marginBottom: 3,
+                  }}
+                >
+                  <img
+                    src={item.imgsrc}
+                    alt={item.name}
+                    style={{
+                      width: 100,
+                      height: 100,
+                      objectFit: "cover",
+                      borderRadius: 8,
+                      marginRight: 16,
+                    }}
+                  />
+                  <Box sx={{ flexGrow: 1 }}>
+                  <Typography variant="h6" color="text.primary">
+                      {item.productName}
+                    </Typography>
+                    <Typography variant="h6" color="text.primary">
+                      {item.price}
+                    </Typography>
+                    <Typography variant="h6" color="text.primary">
+                      {item.name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Size: {item.selectedSize}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Color: {item.selectedColor}
+                    </Typography>
+
+                    <Typography variant="body1" color="text.primary">
+                      Price: ₹{item.price}
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        marginTop: 1,
+                      }}
+                    >
+                      <Button
+                        variant="outlined"
+                        onClick={() =>
+                          handleDecrement(
+                            item.id,
+                            item.selectedSize,
+                            item.selectedColor
+                          )
+                        }
+                      >
+                        -
+                      </Button>
+                      <Typography variant="body1">{item.quantity}</Typography>
+                      <Button
+                        variant="outlined"
+                        onClick={() =>
+                          handleIncrement(
+                            item.id,
+                            item.selectedSize,
+                            item.selectedColor
+                          )
+                        }
+                      >
+                        +
+                      </Button>
+                    </Box>
+                    <IconButton
+                      color="error"
+                      onClick={() =>
+                        handleDelete(
+                          item.id,
+                          item.selectedSize,
+                          item.selectedColor
+                        )
+                      }
+                      sx={{ marginTop: 2 }}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Box>
+                </Box>
+              ))}
+            </Grid>
+
+            <Grid item xs={12} md={4}>
+              <Box
+                sx={{
+                  backgroundColor: "white",
+                  padding: 3,
+                  borderRadius: 2,
+                  boxShadow: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                }}
+              >
+                <Typography variant="h6" color="text.primary" gutterBottom>
+                  Summary
+                </Typography>
+                <Typography variant="body1" color="text.primary">
+                  Subtotal: ₹{subTotal}
+                </Typography>
+                <Typography variant="body1" color="text.primary">
+                  Shipping: ₹{shipping}
+                </Typography>
+                <Typography
+                  variant="h6"
+                  color="text.primary"
+                  sx={{ marginTop: 2 }}
+                >
+                  Total: ₹{Total}
+                </Typography>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  sx={{ marginTop: 3 }}
+                  onClick={handleCheckout}
+                >
+                  Proceed to Checkout
+                </Button>
+              </Box>
+            </Grid>
+          </Grid>
         )}
-      </main>
-      <aside>
-        <h2>SubTotal: {subTotal} Rs</h2>
-        <h2>Shipping: {shipping} Rs</h2>
-        <h2>Total: {Total} Rs</h2>
-        {cartItems.length > 0 ? (
-          <div className='btnval ml-20 mt-11 z-0'>
-            <button type="button" onClick={isLoginHandler}><Link>Payment</Link></button>
-          </div>
-        ) : (
-          console.log("Add item")
-        )}
-      </aside>
-    </div>
+      </Box>
+      <Footer />
+    </>
   );
-}
+};
 
 export default Cart;
