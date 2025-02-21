@@ -26,7 +26,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
-const MONGO_URI = process.env.MONGO_URI || "";
+
 
 // Get the directory name using import.meta.url
 const __filename = fileURLToPath(import.meta.url);
@@ -44,7 +44,7 @@ app.use("/api", sliderRoute);
 
 
 mongoose
-  .connect(MONGO_URI || "mongodb+srv://rohit673367:Rohit367673@cluster0.ixnakmg.mongodb.net/signup")
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.log("MongoDB connection error:", err));
 
