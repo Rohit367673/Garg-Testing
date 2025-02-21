@@ -90,7 +90,7 @@ const CheckoutPage = () => {
       }
 
       const options = {
-        key: process.env.RAZORPAY_KEY,
+        key: process.env.REACT_APP_RAZORPAY_KEY,
         amount: orderData.amount,
         currency: "INR",
         order_id: orderData.orderId,
