@@ -1,95 +1,127 @@
-// components/OtpPage.jsx
-import React, { useState } from "react";
+// OtpField.jsx
+import React, { useState, useEffect } from "react";
 import { Box, TextField, Button, Typography } from "@mui/material";
-import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import axios from "axios";
+// Import your auth instance from firebaseConfig
+import { auth } from "../firebase.Config";
 
-const Otpfield = () => {
+// Import these directly from firebase/auth
+import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+
+const OtpField = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  
-  // Expect signup data passed from Signup page
+
   const { Name, Email, Pass, Number } = location.state || {};
-  
-  // If state is not available, redirect back to signup
-  if (!Number) {
-    navigate("/Signup");
-  }
-  
+
+  // If the user came here without a phone number, redirect:
+  useEffect(() => {
+    if (!Number) {
+      navigate("/Signup");
+    }
+  }, [Number, navigate]);
+
   const [otp, setOtp] = useState("");
   const [message, setMessage] = useState("");
+  const [confirmationResult, setConfirmationResult] = useState(null);
   const [otpSent, setOtpSent] = useState(false);
 
-  // Function to send OTP
+  useEffect(() => {
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
+        size: "invisible", // Make it invisible for seamless user experience
+        callback: (response) => {
+          console.log("reCAPTCHA resolved");
+        },
+        "expired-callback": () => {
+          console.log("reCAPTCHA expired");
+        }
+      });
+  
+      // Ensure reCAPTCHA is rendered
+      window.recaptchaVerifier.render().catch((error) => {
+        console.error("Error rendering reCAPTCHA:", error);
+      });
+    }
+  
+    return () => {
+  
+    };
+  }, []);
+  
+
+  
+  const formatPhoneNumber = (number) => {
+    // Ensure the phone number is in E.164 format (adjust the country code if necessary)
+    if (!number.startsWith("+")) {
+      return `+91${number}`;
+    }
+    return number;
+  };
+  
   const sendOtp = async () => {
     try {
-      const response = await axios.post("http://localhost:3001/api/send-otp", { mobile: Number });
-      if (response.data.success) {
-        setMessage("OTP sent successfully.");
-        setOtpSent(true);
-      } else {
-        setMessage("Failed to send OTP.");
-      }
+      setOtpSent(false);
+      const appVerifier = window.recaptchaVerifier;
+      const formattedNumber = formatPhoneNumber(Number); // Use formatted phone number
+      const confirmation = await signInWithPhoneNumber(auth, formattedNumber, appVerifier);
+      setConfirmationResult(confirmation);
+      setMessage("OTP sent successfully.");
+      setOtpSent(true);
     } catch (error) {
-      console.error("Error sending OTP:", error);
-      setMessage("Error sending OTP. Please try again.");
+      console.error("Error sending OTP:", error.code, error.message);
+      setMessage(`Error sending OTP: ${error.message}`);
+      setOtpSent(true);
     }
   };
-
-  // Function to verify OTP and register user
-  const verifyAndRegister = async () => {
+  
+  const verifyOtp = async () => {
     if (!otp) {
       setMessage("Please enter the OTP.");
       return;
     }
+    if (!confirmationResult) {
+      setMessage("OTP session expired. Please request a new OTP.");
+      return;
+    }
     try {
-      // Verify OTP
-      const verifyResponse = await axios.post("http://localhost:3001/api/verify-otp", {
-        mobile: Number,
-        otp,
-      });
-      if (verifyResponse.data.success) {
-        setMessage("OTP verified successfully.");
-        // Now, register the user by calling /register endpoint
-        const registerResponse = await axios.post("http://localhost:3001/register", {
-          Name,
-          Email,
-          Pass,
-          Number,
-        });
-        if (registerResponse.data.message === "success") {
-          // Registration successful, log the user in and navigate to account page.
-          const userData = { Name, Email, Number, id: registerResponse.data.id };
-          // Assuming your AuthContext login function is available (you may need to import and use it)
-          // login(registerResponse.data.token, userData);
-          toast.success("Registration successful!");
-          navigate("/account", { state: userData });
-        } else {
-          setMessage(registerResponse.data.message || "Registration failed.");
-        }
+      await confirmationResult.confirm(otp);
+      setMessage("OTP verified successfully.");
+      toast.success("Registration successful!");
+      const signupData = { Name, Email, Pass, Number };
+      const res = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/signup`, signupData);
+      if (res.data.success) {
+        toast.success("Registration successful!");
+        navigate("/account", { state: { Name, Email, Number } });
       } else {
-        setMessage("OTP verification failed. Please try again.");
+        toast.error("Registration failed on the backend.");
       }
     } catch (error) {
-      console.error("Error during OTP verification or registration:", error);
-      setMessage("Error during OTP verification. Please try again.");
+      console.error("Error verifying OTP:", error.code, error.message);
+      setMessage("Invalid OTP. Please try again.");
     }
   };
+  
+  
 
   return (
     <Box sx={{ maxWidth: 400, margin: "2rem auto", padding: 2, textAlign: "center" }}>
       <Typography variant="h5" gutterBottom>
         Verify Your Mobile Number
       </Typography>
-      <Typography variant="body1">
-        An OTP has been sent to {Number}. Please enter the OTP below.
-      </Typography>
-      
+      <Typography variant="body1">An OTP will be sent to {Number}.</Typography>
+
       {!otpSent ? (
-        <Button variant="contained" color="primary" onClick={sendOtp} sx={{ mt: 2 }}>
-          Send OTP
-        </Button>
+        <>
+         
+          <div id="recaptcha-container"></div>
+
+          <Button variant="contained" color="primary" onClick={sendOtp} sx={{ mt: 2 }}>
+            Send OTP
+          </Button>
+        </>
       ) : (
         <>
           <TextField
@@ -99,12 +131,12 @@ const Otpfield = () => {
             fullWidth
             margin="normal"
           />
-          <Button variant="contained" color="primary" onClick={verifyAndRegister} fullWidth sx={{ mt: 2 }}>
-            Verify OTP &amp; Register
+          <Button variant="contained" color="primary" onClick={verifyOtp} fullWidth sx={{ mt: 2 }}>
+            Verify OTP
           </Button>
         </>
       )}
-      
+
       {message && (
         <Typography variant="body2" sx={{ mt: 2 }}>
           {message}
@@ -114,4 +146,4 @@ const Otpfield = () => {
   );
 };
 
-export default Otpfield;
+export default OtpField;

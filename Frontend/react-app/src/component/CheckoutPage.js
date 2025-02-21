@@ -5,7 +5,7 @@ import { AuthContext } from "./AuthContext";
 import { initializeCart } from "../redux/CartSlice.js"; // Import initializeCart action
 import "./CheckoutPage.css";
 import Footer from "./Footer.js";
-
+import toast from "react-hot-toast";
 const CheckoutPage = () => {
   const { cartItems, Total, cartId } = useSelector((state) => state.cart);
   const { user } = useContext(AuthContext);
@@ -27,7 +27,7 @@ const CheckoutPage = () => {
     state: "",
   });
 
-  const RAZORPAY_KEY = 'rzp_test_cqRGqNXYhc4b3x';
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -43,23 +43,27 @@ const CheckoutPage = () => {
       navigate("/login");
       return;
     }
+    if (Number.length !== 10) {
+      toast.error("Phone number must be exactly 10 digits!");
+      return;
+    }
 
     const userId = user.id;
 
     const adjustedCartItems = cartItems.map(item => ({
-        productId: item.productId,                     // product id
-      productName: item.productName,   // product name
-      imgsrc: item.imgsrc,             // product image URL
-      price: item.price,               // product price
-      selectedSize: item.selectedSize, // selected size (if any)
-      selectedColor: item.selectedColor, // selected color (if any)
-      quantity: item.quantity,         // quantity ordered
+        productId: item.productId,                   
+      productName: item.productName,   
+      imgsrc: item.imgsrc,             
+      price: item.price,             
+      selectedSize: item.selectedSize, 
+      selectedColor: item.selectedColor, 
+      quantity: item.quantity,         
     }));
     
     
 
     try {
-      const response = await fetch("http://localhost:3001/create-order", {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/create-order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -74,7 +78,7 @@ const CheckoutPage = () => {
             phone: address.phone,
             street: address.street,
             city: address.city,
-            postalCode: address.postalCode, // Rename to postalCode to match schema
+            postalCode: address.postalCode, 
             state: address.state,
           },
         }),
@@ -86,7 +90,7 @@ const CheckoutPage = () => {
       }
 
       const options = {
-        key: RAZORPAY_KEY,
+        key: process.env.RAZORPAY_KEY,
         amount: orderData.amount,
         currency: "INR",
         order_id: orderData.orderId,

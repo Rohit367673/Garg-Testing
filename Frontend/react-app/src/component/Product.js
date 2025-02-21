@@ -13,7 +13,7 @@ const Product = () => {
 
   useEffect(() => {
     axios
-      .get("http://localhost:3001/api/products")
+      .get(`${process.env.REACT_APP_BACKEND_URL}/api/products`)
       .then((response) => setProducts(response.data))
       .catch((error) => console.error("Error fetching products:", error));
   }, []);
@@ -67,41 +67,46 @@ const Product = () => {
       </Grid>
 
       {/* Product List */}
-      <Grid container spacing={3}>
-        {sortedProducts.slice(0, visibleProducts).map((product,index) => (
-          <Grid item key={index} xs={12} sm={6} md={4} lg={3}>
-            <Card sx={{ maxWidth: 300, boxShadow: 3, borderRadius: 2 ,}}>
-              <CardMedia
-              className="h-60 object-contain "
-                component="img"
-                
-                image={`http://localhost:3001/uploads/${product.images?.[0]}`}
-                alt={product.name}
-              />
-              <CardContent>
-                <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                  {product.name}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  ⭐⭐⭐⭐⭐
-                </Typography>
-                <Typography variant="h6" color="primary" sx={{ marginTop: 1 }}>
-                  {product.price} Rs
-                </Typography>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  fullWidth
-                  sx={{ marginTop: 2 }}
-                  onClick={() => handleBuyClick(product)}
-                >
-                  Buy Now
-                </Button>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+      <Grid container spacing={2}>
+  {sortedProducts.slice(0, visibleProducts).map((product, index) => (
+    <Grid 
+      item 
+      key={index} 
+      xs={12} sm={6} md={4} lg={3} 
+      sx={{ display: "flex", justifyContent: "center" }}
+    >
+      <Card sx={{ width: "100%", maxWidth: 280, boxShadow: 3, borderRadius: 2 }}>
+        <CardMedia
+          component="img"
+          image={`${process.env.REACT_APP_BACKEND_URL}/uploads/${product.images?.[0]}`}
+          alt={product.name}
+          sx={{ 
+            height: { xs: 180, sm: 200, md: 240 }, // Reduce image height for small screens
+            objectFit: "contain"
+          }}
+        />
+        <CardContent>
+          <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+            {product.name}
+          </Typography>
+          <Typography variant="h6" color="primary" sx={{ marginTop: 1 }}>
+            {product.price} Rs
+          </Typography>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            fullWidth 
+            sx={{ marginTop: 2 }} 
+            onClick={() => handleBuyClick(product)}
+          >
+            Buy Now
+          </Button>
+        </CardContent>
+      </Card>
+    </Grid>
+  ))}
+</Grid>
+
 
       {/* Load More Button */}
       {visibleProducts < sortedProducts.length && (

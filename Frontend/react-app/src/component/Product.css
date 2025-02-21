@@ -101,4 +101,26 @@
       grid-template-columns: 1fr;
     }
   }
+  /* For screens up to 768px, force each Grid item to be 50% width */
+@media (max-width: 768px) {
+  .MuiGrid-item {
+    flex: 0 0 50% !important;
+    max-width: 50% !important;
+  }
+  /* Override Tailwind's h-60 class (or CardMedia height) to reduce image height */
+  .h-60 {
+    height: 200px !important;
+  }
+}
+
+/* For extra-small screens, show one product per row */
+@media (max-width: 480px) {
+  .MuiGrid-item {
+    flex: 0 0 100% !important;
+    /* max-width: 100% !important; */
+  }
   
+  .h-60 {
+    height: 180px !important;
+  }
+}

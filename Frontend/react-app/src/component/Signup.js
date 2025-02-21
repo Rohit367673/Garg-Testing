@@ -21,13 +21,15 @@ function Signup() {
   const submitHandle = (e) => {
     e.preventDefault();
 
-    // Validate basic fields before moving on
+
     if (!Name || !Email || !Pass || !Number) {
       toast.error("All fields are required!");
       return;
     }
-    
-    // Instead of registering immediately, navigate to OTP page and pass signup data
+    if (Number.length !== 10) {
+      toast.error("Phone number must be exactly 10 digits!");
+      return;
+    }
     const signupData = { Name, Email, Pass, Number };
     navigate("/otpfield", { state: signupData });
   };
@@ -37,7 +39,7 @@ function Signup() {
       const { credential } = credentialResponse;
       const decoded = jwtDecode(credential);
       console.log("Decoded Google User:", decoded);
-      const res = await axios.post("http://localhost:3001/google-signup", {
+      const res = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/google-signup`, {
         token: credential,
       });
       if (res.data.message === "success") {
@@ -116,7 +118,7 @@ function Signup() {
             onChange={(e) => setPassword(e.target.value)}
             className="flex-1 py-2 outline-none"
           />
-          <div className="eye absolute right-0 top-0 mt-2 mr-2">
+          <div className="eye absolute right-0 top-0 mt-3 mr-2">
             <button type="button" onClick={() => setShow(!show)}>
               {show ? <FiEyeOff /> : <FiEye />}
             </button>

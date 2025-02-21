@@ -87,7 +87,7 @@ const Cart = () => {
                     }}
                   />
                   <Box sx={{ flexGrow: 1 }}>
-                  <Typography variant="h6" color="text.primary">
+                    <Typography variant="h6" color="text.primary">
                       {item.productName}
                     </Typography>
                     <Typography variant="h6" color="text.primary">

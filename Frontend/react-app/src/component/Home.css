@@ -73,6 +73,9 @@
     cursor: pointer;
       
       }
+      .Item-Image{
+        padding: 0px 20px;
+      }
        .Item-Image:hover{
         transform: scale(1.1);
         transition: transform 0.5s;}
@@ -97,7 +100,7 @@
       }
       
       .Branding-btn{
-        padding: 1rem 3rem;
+        padding: 1rem 1rem;
         font-size: 20px;
  
         color: #f97316;
@@ -145,8 +148,8 @@
 
 .gallery {
   display: grid;
-  grid-template-columns: repeat(12, 1fr); /* 12-column grid system */
-  grid-auto-rows: 150px; /* Uniform row height */
+  grid-template-columns: repeat(12, 1fr);
+  grid-auto-rows: 150px; 
   gap: 10px;
   max-width: 1200px;
   padding: 20px;
@@ -177,7 +180,8 @@
     }
   
     .Branding-Image {
-      width: 100%;
+      width: 120%;
+      height: auto;
     }
   }
   @media (max-width: 768px) {
@@ -226,7 +230,7 @@
       font-size: 16px;
     }
   }
-/* General container for the video items */
+
 
 .video-container {
   display: flex;
@@ -234,38 +238,37 @@
 justify-content: center;
   gap: 50px;
   margin-top: 30px;
-  flex-wrap: wrap; /* Ensure it wraps on smaller screens */
+  flex-wrap: wrap; 
 }
 
 /* Style for each video item */
 .video-item {
   position: relative;
-  width: 350px; /* Increased width for larger videos */
-  height: 350px; /* Increased height for larger videos */
-  overflow: hidden; /* Ensure no content overflows the image container */
-  border-radius: 15px; /* More rounded corners */
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); /* Slightly deeper shadow */
+  width: 350px;
+  height: 350px; 
+  overflow: hidden; 
+  border-radius: 15px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); 
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer; /* Cursor pointer to indicate it's interactive */
-  background-color: #fff; /* White background for cleaner look */
+  cursor: pointer;
+  background-color: #fff; 
 }
 
-/* Hover effect on the video item */
 .video-item:hover {
-  transform: scale(1.1); /* Enlarges the item slightly */
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Darker shadow on hover */
+  transform: scale(1.1); 
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
-/* Style for the image */
+
 .video-image {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Make sure the image covers the container */
+  object-fit: cover; 
   border-radius: 15px;
   transition: opacity 0.3s ease;
 }
 
-/* Style for the video player */
+
 .video-player {
   position: absolute;
   top: 0;
@@ -273,14 +276,14 @@ justify-content: center;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  visibility: hidden; /* Hide the video initially */
-  border-radius: 15px; /* Match the rounded corners of the image */
+  visibility: hidden;
+  border-radius: 15px; 
   transition: visibility 0.3s ease, opacity 0.3s ease;
 }
 
 /* Smooth opacity fade-in on hover */
 .video-item:hover .video-player {
-  visibility: visible; /* Make video visible when hovered */
+  visibility: visible; 
   opacity: 1;
 }
 @media (max-width: 576px) {
@@ -289,11 +292,15 @@ justify-content: center;
   }
 
   .Item-Image {
-    height: 300px;
+    height: 200px;
   }
 
   .video-item {
     width: 100%;
     height: 250px;
+  }
+  .img1{
+    display: none;
+
   }
 }

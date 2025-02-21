@@ -148,6 +148,12 @@
       left: 50%;
       transform: translateX(-50%); /* Center container on mobile */
     }
+    .Ucontainer.show{
+      padding: 14px 14px;
+      margin-top: 5rem;
+      position: absolute;
+      margin-left: -24px;
+    }
   
     .Uitem > li {
       padding: 8px 15px; /* Adjust padding for smaller screens */

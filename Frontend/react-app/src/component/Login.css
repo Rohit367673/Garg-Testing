@@ -1,22 +1,19 @@
-
-.box{
-    
-    
+.box {
     width: 500px;
-    background: rgba(0,0, 0,0.8);
+    background: rgba(0, 0, 0, 0.8);
     margin: 100px auto;
     padding: 50px 0;
-    color:white;
-    box-shadow: 0 0 20px 2px rgba(0,0, 0,0.5);
-    
-}
-
-.input{
+    color: white;
+    box-shadow: 0 0 20px 2px rgba(0, 0, 0, 0.5);
+  }
+  
+  /* Inputs */
+  .input {
     margin: 31px auto;
-    width:80%;
+    width: 80%;
     border-bottom: 1px solid white;
-}
-.input input{
+  }
+  .input input {
     width: 86%;
     border: none;
     outline: none;
@@ -24,41 +21,109 @@
     color: white;
     margin-left: 19px;
     font-weight: 600;
-}
-.btn{
+  }
+  
+  /* Buttons */
+  .btn {
     margin: 40px auto 20px;
     width: 80%;
     display: block;
-    outline:none;
+    outline: none;
     padding: 10px 0;
-    border:1px solid wheat;
+    border: 1px solid wheat;
     cursor: pointer;
     background: transparent;
     color: white;
     font-size: 16px;
     font-weight: bold;
-    
-}
-button :hover{
+  }
+  button:hover {
     font-weight: bolder;
-}
-    
-
-.box>p{
-color: white;
-font-family: sans-serif;
-font-size: medium;
-}
-.input>svg{
+ 
+  }
+  
+  /* Text & Eye Icon */
+  .box > p {
+    color: white;
+    font-family: sans-serif;
+    font-size: medium;
+  }
+  .input > svg {
     font-weight: 600;
-}
-.eye{
+  }
+  .eye {
     margin-left: 23rem;
     cursor: pointer;
-
     font-size: 1.5rem;
-}
-
-.box p> a{
+  }
+  .box p > a {
     font-weight: bold;
-}
+  }
+  
+
+  @media (max-width: 768px) {
+    .box {
+      width: 90%;
+      margin: 60px auto;
+      padding: 30px 20px;
+    }
+  
+    /* Slightly smaller text on mid-sized screens */
+    .box > p {
+      font-size: 0.95rem;
+    }
+  
+    .btn {
+      font-size: 15px;
+      padding: 8px 0;
+    }
+  
+    .eye {
+      margin-left: auto;
+    }
+    .signup-text{
+        margin-left: 3rem;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .box {
+      width: 95%;
+      margin: 40px auto;
+      padding: 20px 15px;
+    }
+  
+    .box > p {
+      font-size: 0.9rem;
+    }
+  
+    /* Smaller input spacing on narrow screens */
+    .input {
+      margin: 20px auto;
+    }
+    .input input {
+      margin-left: 10px;
+    }
+  
+    /* Make button text a bit smaller */
+    .btn {
+      font-size: 14px;
+      padding: 7px 0;
+    }
+  
+    /* Eye icon and label alignment on very small screens */
+    .eye {
+      position: absolute;
+      
+      margin-left: 13rem; 
+      font-size: 1.3rem;
+    }
+    .signup-text{
+        margin-left: 3rem !important;
+    }
+  }
+  
+
+  .signup-text{
+    margin-left: 8rem;
+  }

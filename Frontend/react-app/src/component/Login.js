@@ -30,7 +30,7 @@ function Login() {
     e.preventDefault();
 
     axios
-      .post("http://localhost:3001/login", { Email, Pass },)
+      .post(`${process.env.REACT_APP_BACKEND_URL}/login`, { Email, Pass },)
       .then((res) => {
         if (res.data.message === "success") {
     
@@ -46,13 +46,13 @@ function Login() {
         console.error(err);
       });
   };
-  const handleGoogleSuccess = async (credentialResponse) => {
+   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const { credential } = credentialResponse;
       const decoded = jwtDecode(credential);
       console.log("Decoded Google User:", decoded);
 
-      const res = await axios.post("http://localhost:3001/google-signup", {
+      const res = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/google-signup`, {
         token: credential,
       });
 
@@ -76,6 +76,9 @@ function Login() {
       toast.error("Google Sign-Up failed!");
     }
   };
+
+
+
 
   const handleGoogleFailure = () => {
     console.log('Google Sign-In was unsuccessful.');
@@ -105,17 +108,18 @@ function Login() {
         value={Pass}
         onChange={(e) => setPassword(e.target.value)}
       />
-      <div className="eye -mt-8">
+      <div className="eye -mt-8 sm: mr-8">
         <button type="button" onClick={() => setShow(!show)}>
           {show ? <FiEyeOff /> : <FiEye />}
         </button>
       </div>
     </div>
     {error && <p style={{ color: "red", marginLeft: "7rem", marginTop: "-1rem" }}>{error}</p>}
-    <button type="submit" className="btn">Login</button>
-    <p className="ml-32">
-      Don't have an account? <Link to="/Signup">Sign Up</Link>
-      <p className="ml-8 mt-1">Or <Link to="/ChangePassword">Forgot Password?</Link></p>
+    <button type="submit" className="btn w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition duration-200"
+    >Login</button>
+    <p className="signup-text">
+      Don't have an account? <Link to="/Signup" className="text-blue-500">Sign Up</Link>
+      <p className="ml-8 mt-1">Or <Link to="/ChangePassword" className="text-blue-500">Forgot Password?</Link></p>
     </p>
     
      <div className="flex justify-center mt-6">

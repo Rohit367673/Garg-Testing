@@ -1,6 +1,13 @@
 import React, { useContext } from "react";
 import { Outlet, useNavigate, Link } from "react-router-dom";
-import { List, ListItem, ListItemText, Typography, Box, Divider } from "@mui/material";
+import {
+  List,
+  ListItem,
+  ListItemText,
+  Typography,
+  Box,
+  Divider,
+} from "@mui/material";
 import { AuthContext } from "../component/AuthContext";
 
 const Sidebar = () => {
@@ -9,11 +16,13 @@ const Sidebar = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/Admin/Login');
+    navigate("/Admin/Login");
   };
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", backgroundColor: "#f4f4f9" }}>
+    <Box
+      sx={{ display: "flex", minHeight: "100vh", backgroundColor: "#f4f4f9" }}
+    >
       {/* Sidebar */}
       <Box
         sx={{
@@ -33,18 +42,40 @@ const Sidebar = () => {
         >
           Admin Panel
         </Typography>
-        <Divider sx={{ backgroundColor: "rgba(255, 255, 255, 0.2)", marginBottom: 2 }} />
+        <Divider
+          sx={{ backgroundColor: "rgba(255, 255, 255, 0.2)", marginBottom: 2 }}
+        />
         <List>
-          <ListItem button component={Link} to="/Admin/Addproduct" sx={{ color: "#fff" }}>
+          <ListItem
+            button
+            component={Link}
+            to="/Admin/Addproduct"
+            sx={{ color: "#fff" }}
+          >
             <ListItemText primary="Add Product" />
           </ListItem>
-          <ListItem button component={Link} to="/Admin/Products" sx={{ color: "#fff" }}>
+          <ListItem
+            button
+            component={Link}
+            to="/Admin/Products"
+            sx={{ color: "#fff" }}
+          >
             <ListItemText primary="Products" />
           </ListItem>
-          <ListItem button component={Link} to="/Admin/AdminOrders" sx={{ color: "#fff" }}>
+          <ListItem
+            button
+            component={Link}
+            to="/Admin/AdminOrders"
+            sx={{ color: "#fff" }}
+          >
             <ListItemText primary="Orders" />
           </ListItem>
-          <ListItem button component={Link} to="/Admin/Slider" sx={{ color: "#fff" }}>
+          <ListItem
+            button
+            component={Link}
+            to="/Admin/Slider"
+            sx={{ color: "#fff" }}
+          >
             <ListItemText primary="Slider" />
           </ListItem>
           {/* Logout Button */}

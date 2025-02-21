@@ -12,10 +12,9 @@ function Home() {
   useEffect(() => {
     const fetchSlides = async () => {
       try {
-        const res = await axios.get('http://localhost:3001/api/slider');
-        // IMPORTANT: Prepend '/uploads/' so that the URL becomes:
-        // http://localhost:3001/uploads/filename.jpg
-        const slideUrls = res.data.map(slide => 'http://localhost:3001/uploads/' + slide.imageUrl);
+        const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/slider`);
+     
+        const slideUrls = res.data.map(slide => `${process.env.REACT_APP_BACKEND_URL}/uploads/` + slide.imageUrl);
         setSlides(slideUrls);
       } catch (err) {
         console.error("Error fetching slider images:", err);
@@ -119,7 +118,7 @@ function Home() {
 
       {/* Other sections of your home page remain unchanged */}
       <h1 className="flex justify-center mt-8 text-4xl border-l">Browse The Range</h1>
-      <div className="Item-Container flex gap-8 justify-center mt-12">
+      <div className="Item-Container flex  justify-center mt-12">
         <div id="Item">
           <Link to="/Product">
             <img src="/Images/Catlog-Boys-kids-wear.jpg" alt="Kids" className="Item-Image" />
@@ -178,7 +177,7 @@ function Home() {
         </div>
       </div>
 
-      <h1 className="flex justify-center mt-16 text-4xl border-l">Upload Your Garg Collection</h1>
+      <h1 className="flex justify-center mt-16 text-2xl border-l">Upload Your Garg Collection</h1>
       <div className="video-container mt-16">
         {videoData.map((data, index) => (
           <div

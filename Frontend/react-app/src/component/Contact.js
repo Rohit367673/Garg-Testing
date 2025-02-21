@@ -21,7 +21,7 @@ function Contact() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("http://localhost:3001/send-email", formData);
+      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/send-email`, formData);
       alert(response.data.message);
     } catch (error) {
       alert("Failed to send message. Please try again.");

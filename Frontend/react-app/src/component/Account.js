@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
-import { Link, useLocation} from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import axios from "axios";
 import { AuthContext } from "./AuthContext";
 import Footer from "./Footer";
 
 function Account() {
-  const { user } = useContext(AuthContext); // Use logout from AuthContext
+  const { user } = useContext(AuthContext); 
   const uploadedImage = useRef(null);
   const imageUploader = useRef(null);
   const location = useLocation();
@@ -65,7 +65,7 @@ function Account() {
     setIsEditing(false);
     const token = localStorage.getItem("token");
     axios
-      .post("http://localhost:3001/updateProfile", formValues, {
+      .post(`${process.env.REACT_APP_BACKEND_URL}/updateProfile`, formValues, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -77,8 +77,6 @@ function Account() {
         console.error("There was an error updating the profile!", error);
       });
   };
-
-
 
   return (
     <>
@@ -202,8 +200,6 @@ function Account() {
                 Edit Profile
               </button>
             )}
-
-          
           </div>
         </div>
       </div>

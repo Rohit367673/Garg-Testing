@@ -1,6 +1,6 @@
 // AdminSlider.js
-import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect, useRef } from "react";
+import axios from "axios";
 import {
   Box,
   Button,
@@ -9,22 +9,22 @@ import {
   Card,
   CardMedia,
   CardActions,
-  Paper
-} from '@mui/material';
+  Paper,
+} from "@mui/material";
 
 function AdminSlider() {
   const [images, setImages] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
   const fileInputRef = useRef(null);
 
-  // Fetch slider images when the component mounts
+
   useEffect(() => {
     fetchImages();
   }, []);
 
   const fetchImages = async () => {
     try {
-      const res = await axios.get('http://localhost:3001/api/slider');
+      const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/slider`);
       setImages(res.data);
     } catch (err) {
       console.error("Error fetching slider images", err);
@@ -51,27 +51,34 @@ function AdminSlider() {
       return;
     }
     const formData = new FormData();
-    formData.append('image', selectedFile);
+    formData.append("image", selectedFile);
 
     try {
-      const res = await axios.post('http://localhost:3001/api/slider', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
+      const res = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/api/slider`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         }
-      });
-      console.log('Upload response:', res.data);
+      );
+      console.log("Upload response:", res.data);
       setSelectedFile(null);
       fetchImages();
     } catch (err) {
       console.error("Error uploading slider image", err);
-      alert("Error uploading slider image: " + (err.response?.data?.error || err.message));
+      alert(
+        "Error uploading slider image: " +
+          (err.response?.data?.error || err.message)
+      );
     }
   };
 
   // Delete a slider image by its ID
   const handleDeleteImage = async (id) => {
     try {
-      await axios.delete(`http://localhost:3001/api/slider/${id}`);
+      await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/slider/${id}`);
       fetchImages();
     } catch (err) {
       console.error("Error deleting slider image", err);
@@ -91,13 +98,13 @@ function AdminSlider() {
         </Typography>
         <form onSubmit={handleUploadImage}>
           {/* Hidden file input */}
-          <input 
-            type="file" 
+          <input
+            type="file"
             onChange={handleFileChange}
             ref={fileInputRef}
-            style={{ display: 'none' }}
+            style={{ display: "none" }}
           />
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
             <Button variant="outlined" onClick={handleChooseFile}>
               Choose File
             </Button>
@@ -120,7 +127,7 @@ function AdminSlider() {
               <CardMedia
                 component="img"
                 height="150"
-                image={`http://localhost:3001/uploads/${image.imageUrl}`}
+                image={`${process.env.REACT_APP_BACKEND_URL}/uploads/${image.imageUrl}`}
                 alt="Slider"
               />
               <CardActions>

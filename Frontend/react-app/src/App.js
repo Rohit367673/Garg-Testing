@@ -1,10 +1,10 @@
 import React from "react";
 import "./App.css";
-import "./Responsive.css";
+
 import Header from "./component/Header";
 import Home from "./component/Home";
 import Cart from "./component/Cart";
-import Collection from "./component/Product";
+
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import Login from "./component/Login";
@@ -35,6 +35,9 @@ import UserOrders from "./component/UserOrders";
 import ProtectedUserRoute from "./component/ProtectedUserRoute";
 import AdminSlider from "./Admin/AdminSlider";
 
+import Product from "./component/Product";
+import SearchRecommendation from "./component/SearchRecommendation";
+
 function App() {
   return (
     <GoogleOAuthProvider clientId="663051077642-lk27c11jh230j4vdcb6sduj5fp4jela4.apps.googleusercontent.com">
@@ -45,13 +48,14 @@ function App() {
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Home />} />
-            <Route path="/Collection" element={<Collection />} />
+            <Route path="/Product" element={<Product/>} />
             <Route path="/About" element={<About />} />
             <Route path="/Contact" element={<Contact />} />
             <Route path="/product/:productId" element={<ProductDetails />} />
             <Route path="/Login" element={<Login />} />
             <Route path="/Signup" element={<Signup />} />
-            <Route path="/Otpfield" element={<Otpfield />} />
+            <Route path="/Otpfield" element={<Otpfield/>}/>
+            <Route path="/SearchRecommendation" element={<SearchRecommendation/>}/>
 
             {/* Protected User Routes */}
             <Route path="/Cart" element={<ProtectedUserRoute element={Cart} />} />

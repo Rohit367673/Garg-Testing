@@ -1,10 +1,10 @@
-/* Global Styles */
+/* Base styles for Header */
 .nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 15px 25px;
-  background-color: white;
+  background-color: #fff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 0;
@@ -12,19 +12,18 @@
   z-index: 1000;
 }
 
-/* Logo */
+
 .logo {
   width: 150px;
 }
 
-/* Navigation Menu */
 .menu {
   display: flex;
   align-items: center;
   gap: 30px;
 }
 
-/* Menu List */
+
 .menu-list {
   display: flex;
   list-style: none;
@@ -33,160 +32,144 @@
   padding: 0;
 }
 
-.menu-list li {
-  list-style: none;
-}
-
-.nav a {
+.menu-list li a {
   text-decoration: none;
   font-size: 18px;
   font-weight: 600;
   color: black;
-  transition: color 0.3s ease-in-out;
+  transition: color 0.3s ease;
 }
 
-.nav a:hover {
-  font-weight: bold;
+.menu-list li a.active,
+.menu-list li a:hover {
   color: #ff6347;
 }
 
-/* ✅ Fix: Keep Profile, Username, and Button in One Line */
-.right-section {
+/* Cart link */
+.cart-link {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 20px;  /* Space between profile, button, etc. */
 }
 
-/* Profile & Username */
-.user-profile {
+.shoppingbag {
+  font-size: 24px;
+}
+
+.cart-count {
+  position: absolute;
+  top: -5px;
+  right: -10px;
+  background: black;
+  color: white;
+  font-size: 10px;
+  border-radius: 50%;
+  padding: 2px 5px;
+}
+
+
+.nav-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 20px;
 }
 
-.username {
-  font-size: 16px;
+.search-container {
+  position: relative;
+}
+
+.search-container input {
+  border: 1px solid #ccc;
+  border-radius: 2rem;
+  padding: 8px 15px;
+  width: 20rem;
+  transition: width 0.3s ease;
+}
+
+.btnval .login-button,
+.btnval button {
   font-weight: 600;
-  color: black;
+  padding: 8px 20px;
+  border: none;
+  background-color: #fff;
+  cursor: pointer;
+  border-radius: 25px;
+  box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s ease;
+}
+
+.btnval .login-button:hover,
+.btnval button:hover {
+  background-color: #ff6347;
+  color: #fff;
+}
+
+.user-greeting {
+  font-size: 14px;
+  font-weight: 600;
+ 
 }
 
 /* Profile Icon */
+.profile-icon-container {
+  cursor: pointer;
+}
+
 .icon-user {
-  font-size: 1.6rem;
-  color: black;
-  cursor: pointer;
-  transition: color 0.3s ease-in-out;
+  font-size: 24px;
 }
 
-.icon-user:hover {
-  color: #ff6347;
-}
-
-/* Login Button */
-.btnval button {
-  font-weight: 500;
-  font-size: 1rem;
-  color: black;
-  cursor: pointer;
-  padding: 8px 20px;
-  border-radius: 25px;
-  box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.2);
-  border: none;
-  background-color: white;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
-}
-
-.btnval button::after {
-  content: "";
-  position: absolute;
-  width: 0%;
-  height: 100%;
-  background-color: rgb(249, 115, 22);
-  left: 50%;
-  bottom: 0;
-  transform: translateX(-50%);
-  transition: width 0.4s;
-}
-
-.btnval button:hover::after {
-  width: 100%;
-}
-
-.btnval button:hover {
-  color: white;
-}
-.btnval button a {
-  z-index: 9;
-  position: relative;
-  font-weight: 600;
-}
-.btnval button:hover a {
-  color: black;
-}
-
-
-
-/* Mobile Menu */
+/* Mobile Menu Toggle */
 .menu-toggle {
   display: none;
   background: none;
   border: none;
-  font-size: 1.8rem;
-  cursor: pointe;
-}
-.nav-right{
-  display: flex;
-  align-items: center;
-  gap: 60px;
+  font-size: 24px;
+  cursor: pointer;
 }
 
-/* ✅ Fix: Mobile Layout */
+/* Responsive Styles */
+
+
+
 @media (max-width: 1024px) {
   .nav {
-    padding: 12px 20px;
+    flex-wrap: wrap;
+    padding: 10px 20px;
   }
 
+  /* Hide the horizontal menu by default; show when toggled */
   .menu {
-    position: absolute;
-    top: 100%;
-    left: 0;
     width: 100%;
-    background-color: white;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    padding: 15px 0;
     flex-direction: column;
-    transform: translateY(-10px);
-    opacity: 0;
-    transition: transform 0.3s ease, opacity 0.3s ease;
-    z-index: 1050;
+    align-items: center;
     display: none;
+    margin-top: 10px;
   }
 
   .menu.open {
     display: flex;
-    transform: translateY(0);
-    opacity: 1;
   }
 
   .menu-list {
     flex-direction: column;
-    gap: 15px;
+    gap: 10px;
+  }
+
+  .search-container input {
+    width: 10rem;
+  }
+
+  .nav-right {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
     align-items: center;
+    margin-top: 10px;
   }
 
   .menu-toggle {
     display: block;
-  }
-
-  .right-section {
-    gap: 10px;
-  }
-
-  .btnval button {
-    padding: 6px 15px;
-    font-size: 0.9rem;
   }
 }
 
@@ -195,20 +178,25 @@
     width: 120px;
   }
 
-  .menu-list li {
-    font-size: 0.9rem;
+  .search-container input {
+    width: 10rem;
+    padding: 6px 10px;
+  }
+
+  .menu-list li a {
+    font-size: 16px;
   }
 
   .icon-user {
-    font-size: 1.4rem;
+    font-size: 20px;
   }
 
+  .btnval .login-button,
   .btnval button {
-    padding: 5px 12px;
-    font-size: 0.85rem;
+    padding: 6px 15px;
+    font-size: 14px;
   }
 }
-
 
 
 /* css for footer */
@@ -263,6 +251,7 @@ footer {
   padding: 10px;
   border: 1px solid #ccc;
   flex-grow: 1;
+  width: auto;
 }
 
 .footer-section button {

@@ -1,18 +1,27 @@
-import React, { useState } from 'react';
-import { TextField, Button, Grid, Box, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
-import axios from 'axios';
-import toast from 'react-hot-toast';
+import React, { useState } from "react";
+import {
+  TextField,
+  Button,
+  Grid,
+  Box,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl,
+} from "@mui/material";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 const AddProduct = () => {
   const [product, setProduct] = useState({
-    name: '',
-    description: '',
-    price: '',
-    images: [],  // Store multiple images
-    size: '',
-    color: '',
-    stock: 'In Stock',
-    category: '',
+    name: "",
+    description: "",
+    price: "",
+    images: [],
+    size: "",
+    color: "",
+    stock: "In Stock",
+    category: "",
   });
 
   // Handle form field changes
@@ -34,30 +43,34 @@ const AddProduct = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData();
-    formData.append('name', product.name);
-    formData.append('description', product.description);
-    formData.append('price', product.price);
-    formData.append('size', product.size);
-    formData.append('color', product.color);
-    formData.append('stock', product.stock);
-    formData.append('category', product.category);
+    formData.append("name", product.name);
+    formData.append("description", product.description);
+    formData.append("price", product.price);
+    formData.append("size", product.size);
+    formData.append("color", product.color);
+    formData.append("stock", product.stock);
+    formData.append("category", product.category);
 
     // Append each image to FormData
     product.images.forEach((image) => {
-      formData.append('images', image); // The key 'images' is used to store the image files
+      formData.append("images", image); // The key 'images' is used to store the image files
     });
 
     try {
-      const response = await axios.post('http://localhost:3001/api/products', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data', // Important for file uploads
-        },
-      });
-       toast.success("Successfully uploaded")
+      const response = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/api/products`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data", // Important for file uploads
+          },
+        }
+      );
+      toast.success("Successfully uploaded");
       console.log(response.data);
       // Handle success (e.g., show a success message or reset the form)
     } catch (error) {
-      console.error('Error adding product:', error);
+      console.error("Error adding product:", error);
     }
   };
 
@@ -95,7 +108,6 @@ const AddProduct = () => {
           </Grid>
           <Grid item xs={12}></Grid>
 
-
           <Grid item xs={12}></Grid>
           {/* Image Upload Field */}
           <Grid item xs={12}>
@@ -104,7 +116,7 @@ const AddProduct = () => {
               accept="image/*"
               multiple
               onChange={handleImageUpload} // Handle file selection
-              style={{ display: 'block', margin: '10px 0' }} // Optional: Style the input
+              style={{ display: "block", margin: "10px 0" }} // Optional: Style the input
             />
             <div>
               {product.images.length > 0 &&
@@ -114,7 +126,7 @@ const AddProduct = () => {
                     src={URL.createObjectURL(image)} // Preview the image before upload
                     alt={`Preview ${index}`}
                     width="100"
-                    style={{ margin: '5px' }}
+                    style={{ margin: "5px" }}
                   />
                 ))}
             </div>
@@ -155,19 +167,18 @@ const AddProduct = () => {
             />
           </Grid>
           <Grid item xs={12}>
-          <FormControl fullWidth>
-  <InputLabel>Stock</InputLabel>
-  <Select
-    label="Stock"
-    name="stock"
-    value={product.stock}
-    onChange={handleChange}
-  >
-    <MenuItem value="In Stock">In Stock</MenuItem>
-    <MenuItem value="Out of Stock">Out of Stock</MenuItem>
-  </Select>
-</FormControl>
-
+            <FormControl fullWidth>
+              <InputLabel>Stock</InputLabel>
+              <Select
+                label="Stock"
+                name="stock"
+                value={product.stock}
+                onChange={handleChange}
+              >
+                <MenuItem value="In Stock">In Stock</MenuItem>
+                <MenuItem value="Out of Stock">Out of Stock</MenuItem>
+              </Select>
+            </FormControl>
           </Grid>
           <Grid item xs={12}>
             <Button type="submit" variant="contained">
