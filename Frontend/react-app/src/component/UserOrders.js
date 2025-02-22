@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from "react";
 import { AuthContext } from "./AuthContext";
-import Footer from "./Footer"
+import Footer from "./Footer";
 import {
   Box,
   Typography,
@@ -9,7 +9,9 @@ import {
   Container,
   Card,
   CardContent,
-  CardMedia
+  CardMedia,
+  Divider,
+  GlobalStyles,
 } from "@mui/material";
 
 const UserOrders = () => {
@@ -60,116 +62,150 @@ const UserOrders = () => {
 
   return (
     <>
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h4" gutterBottom textAlign="center" color="text.primary">
-        My Orders
-      </Typography>
+      {/* Global styles to ensure full width on screens <= 768px */}
+      <GlobalStyles
+        styles={{
+          "@media (max-width:768px)": {
+            ".MuiGrid-item": {
+              flex: "0 0 100% !important",
+              maxWidth: "100% !important",
+            },
+          },
+        }}
+      />
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Typography
+          variant="h4"
+          align="center"
+          gutterBottom
+          color="primary"
+          sx={{ fontWeight: "bold" }}
+        >
+          My Orders
+        </Typography>
 
-      {loading && (
-        <Box textAlign="center" sx={{ py: 4 }}>
-          <CircularProgress />
-        </Box>
-      )}
+        {loading && (
+          <Box textAlign="center" sx={{ py: 4 }}>
+            <CircularProgress />
+          </Box>
+        )}
 
-      {error && (
-        <Box textAlign="center" color="error.main" sx={{ py: 4 }}>
-          <Typography variant="h6">{error}</Typography>
-        </Box>
-      )}
+        {error && (
+          <Box textAlign="center" sx={{ py: 4 }}>
+            <Typography variant="h6" color="error">
+              {error}
+            </Typography>
+          </Box>
+        )}
 
-      {orders.length === 0 && !loading && (
-        <Box textAlign="center" sx={{ py: 4 }}>
-          <Typography variant="h6" color="text.secondary">
-            No orders found.
-          </Typography>
-        </Box>
-      )}
+        {orders.length === 0 && !loading && (
+          <Box textAlign="center" sx={{ py: 4 }}>
+            <Typography variant="h6" color="text.secondary">
+              No orders found.
+            </Typography>
+          </Box>
+        )}
 
-      <Grid container spacing={4}>
-        {orders.map((order) => (
-          <Grid item xs={12} key={order._id}>
-            <Card
-              sx={{
-                borderRadius: 2,
-                boxShadow: 3,
-                transition: "transform 0.3s",
-                "&:hover": { transform: "scale(1.03)" },
-                display: "block",
-                flexDirection: "column",
-                width: "100%",
-              }}
-            >
-              <CardContent>
-                <Typography sx={{fontSize:"9px"}} gutterBottom>
-                  Order ID: {order._id}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  <strong>Date:</strong> {new Date(order.createdAt).toLocaleDateString()}
-                </Typography>
-                <Typography
-                  variant="body1"
-                  sx={{
-                    color: order.orderStatus?.toLowerCase() === "delivered" ? "green" : "text.secondary",
-                    mb: 1,
-                  }}
-                >
-                  <strong>Status:</strong> {order.orderStatus}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  <strong>Payment Status:</strong> {order.paymentStatus}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  <strong>Total:</strong> ₹{order.totalAmount}
-                </Typography>
-              </CardContent>
-              <Box sx={{ p: 2 }}>
-                <Typography variant="body1" fontWeight="bold" gutterBottom>
-                  Items:
-                </Typography>
-                {order.cartItems.map((item, index) => (
-                  <Box key={index} sx={{ display: "block", alignItems: "center", mb: 2 }}>
-                    <CardMedia
-                      component="img"
-                      image={item.imgsrc}
-                      alt={item.productName}
+        <Grid container spacing={4}>
+          {orders.map((order) => (
+            <Grid item xs={12} sm={12} md={6} lg={4} key={order._id}>
+              <Card
+                sx={{
+                  borderRadius: 3,
+                  boxShadow: 3,
+                  display: "flex",
+                  flexDirection: "column",
+                  height: "100%",
+                  transition: "transform 0.3s",
+                  "&:hover": { transform: "scale(1.03)" },
+                }}
+              >
+                <CardContent>
+                  <Typography variant="caption" color="text.secondary">
+                    Order ID: {order._id}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Date: {new Date(order.createdAt).toLocaleDateString()}
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    fontWeight="bold"
+                    sx={{
+                      color:
+                        order.orderStatus?.toLowerCase() === "delivered"
+                          ? "green"
+                          : "text.secondary",
+                      mb: 1,
+                    }}
+                  >
+                    Status: {order.orderStatus}
+                  </Typography>
+                  <Divider sx={{ my: 1 }} />
+                  <Typography variant="body2" color="text.secondary">
+                    Payment: {order.paymentStatus}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Total: ₹{order.totalAmount}
+                  </Typography>
+                </CardContent>
+                <Box sx={{ p: 2, pt: 0, flexGrow: 1 }}>
+                  <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                    Items:
+                  </Typography>
+                  {order.cartItems.map((item, index) => (
+                    <Box
+                      key={index}
                       sx={{
-                        width: { xs: 60, sm: 80 },
-                        height: { xs: 60, sm: 80 },
-                        objectFit: "cover",
+                        display: "flex",
+                        alignItems: "center",
+                        mb: 2,
+                        p: 1,
                         borderRadius: 2,
-                        mr: 2,
+                        backgroundColor: "grey.100",
                       }}
-                    />
-                    <Box>
-                      <Typography variant="body1" fontWeight="bold">
-                        {item.productName}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Price: ₹{item.price}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Quantity: {item.quantity}
-                      </Typography>
-                      {item.selectedSize && (
-                        <Typography variant="body2" color="text.secondary">
-                          Size: {item.selectedSize}
+                    >
+                      <CardMedia
+                        component="img"
+                        image={item.imgsrc}
+                        alt={item.productName}
+                        sx={{
+                          width: { xs: 60, sm: 80 },
+                          height: { xs: 60, sm: 80 },
+                          objectFit: "cover",
+                          borderRadius: 2,
+                          mr: 2,
+                        }}
+                      />
+                      <Box>
+                        <Typography variant="body1" fontWeight="bold">
+                          {item.productName}
                         </Typography>
-                      )}
-                      {item.selectedColor && (
                         <Typography variant="body2" color="text.secondary">
-                          Color: {item.selectedColor}
+                          Price: ₹{item.price}
                         </Typography>
-                      )}
+                        <Typography variant="body2" color="text.secondary">
+                          Qty: {item.quantity}
+                        </Typography>
+                        {item.selectedSize && (
+                          <Typography variant="body2" color="text.secondary">
+                            Size: {item.selectedSize}
+                          </Typography>
+                        )}
+                        {item.selectedColor && (
+                          <Typography variant="body2" color="text.secondary">
+                            Color: {item.selectedColor}
+                          </Typography>
+                        )}
+                      </Box>
                     </Box>
-                  </Box>
-                ))}
-              </Box>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-    </Container>
-    <Footer/>
+                  ))}
+                </Box>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
+      <Footer />
     </>
   );
 };
