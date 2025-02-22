@@ -14,7 +14,6 @@ import Footer from "./Footer";
 const Cart = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
   const { cartItems, subTotal, shipping, Total } = useSelector(
     (state) => state.cart
   );
@@ -45,14 +44,21 @@ const Cart = () => {
 
   return (
     <>
-      <Box sx={{ padding: 4, backgroundColor: "#f8f8f8", minHeight: "100vh" }}>
+      <Box
+        sx={{
+          padding: { xs: 2, md: 4 },
+          backgroundColor: "#f8f8f8",
+          minHeight: "100vh",
+        }}
+      >
         <Typography
           variant="h4"
           gutterBottom
           textAlign="center"
           color="text.primary"
+          sx={{ fontWeight: "bold" }}
         >
-          Your Shopping Cart
+          Cart
         </Typography>
 
         {cartItems.length === 0 ? (
@@ -60,62 +66,76 @@ const Cart = () => {
             Your cart is empty.
           </Typography>
         ) : (
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={8}>
+          <Grid container spacing={3} justifyContent="center">
+            {/* Product List Section */}
+            <Grid item xs={12} md={8}  sx={{
+      "@media (max-width: 768px)": {
+      flex: "0 0 100% !important",
+      maxWidth: "100% !important",
+    },
+  }}>
               {cartItems.map((item) => (
                 <Box
                   key={`${item.id}-${item.selectedSize}-${item.selectedColor}`}
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
+                 
+                    maxWidth: { xs: "90%", sm: "100%", md: "70%" },
+                    margin: "0 auto",
                     backgroundColor: "white",
                     padding: 2,
                     borderRadius: 2,
-                    boxShadow: 1,
+                    boxShadow: 2,
                     marginBottom: 3,
+                    display: "flex",
+                    flexDirection: { xs: "column", sm: "row" },
+                    alignItems: "center",
+                    transition: "transform 0.2s, box-shadow 0.2s",
+                    "&:hover": {
+                      transform: "scale(1.02)",
+                      boxShadow: 4,
+                    },
                   }}
                 >
-                  <img
+                  {/* Reduced image width on small screens */}
+                  <Box
+                    component="img"
                     src={item.imgsrc}
                     alt={item.name}
-                    style={{
-                      width: 100,
-                      height: 100,
+                    sx={{
+                      width: { xs: 100, sm: 120 }, // Smaller image for mobile
+                      height: "auto",
                       objectFit: "cover",
-                      borderRadius: 8,
-                      marginRight: 16,
+                      borderRadius: 2,
+                      marginRight: { xs: 0, sm: 2 },
+                      marginBottom: { xs: 2, sm: 0 },
                     }}
                   />
+
                   <Box sx={{ flexGrow: 1 }}>
                     <Typography variant="h6" color="text.primary">
                       {item.productName}
                     </Typography>
-                    <Typography variant="h6" color="text.primary">
-                      {item.price}
-                    </Typography>
-                    <Typography variant="h6" color="text.primary">
+                    <Typography variant="body1" color="text.primary">
                       {item.name}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Size: {item.selectedSize}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Color: {item.selectedColor}
-                    </Typography>
-
-                    <Typography variant="body1" color="text.primary">
                       Price: ₹{item.price}
                     </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Size: {item.selectedSize} | Color: {item.selectedColor}
+                    </Typography>
+
                     <Box
                       sx={{
                         display: "flex",
                         alignItems: "center",
-                        gap: 2,
+                        gap: 1,
                         marginTop: 1,
                       }}
                     >
                       <Button
                         variant="outlined"
+                        size="small"
                         onClick={() =>
                           handleDecrement(
                             item.id,
@@ -129,6 +149,7 @@ const Cart = () => {
                       <Typography variant="body1">{item.quantity}</Typography>
                       <Button
                         variant="outlined"
+                        size="small"
                         onClick={() =>
                           handleIncrement(
                             item.id,
@@ -140,6 +161,7 @@ const Cart = () => {
                         +
                       </Button>
                     </Box>
+
                     <IconButton
                       color="error"
                       onClick={() =>
@@ -149,7 +171,7 @@ const Cart = () => {
                           item.selectedColor
                         )
                       }
-                      sx={{ marginTop: 2 }}
+                      sx={{ marginTop: 1 }}
                     >
                       <DeleteIcon />
                     </IconButton>
@@ -158,19 +180,33 @@ const Cart = () => {
               ))}
             </Grid>
 
-            <Grid item xs={12} md={4}>
+            {/* Summary Section */}
+            <Grid item xs={12} md={4}
+             sx={{
+              "@media (max-width: 768px)": {
+                flex: "0 0 100% !important",
+                maxWidth: "100% !important",
+              },
+            }}>
               <Box
                 sx={{
+                  maxWidth: { xs: "90%", sm: "80%", md: "100%" },
+                  margin: "0 auto",
                   backgroundColor: "white",
                   padding: 3,
                   borderRadius: 2,
-                  boxShadow: 1,
+                  boxShadow: 2,
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "flex-start",
                 }}
               >
-                <Typography variant="h6" color="text.primary" gutterBottom>
+                <Typography
+                  variant="h6"
+                  color="text.primary"
+                  gutterBottom
+                  sx={{ fontWeight: "bold" }}
+                >
                   Summary
                 </Typography>
                 <Typography variant="body1" color="text.primary">
@@ -189,7 +225,7 @@ const Cart = () => {
                 <Button
                   variant="contained"
                   color="primary"
-                  sx={{ marginTop: 3 }}
+                  sx={{ marginTop: 3, width: "100%" }}
                   onClick={handleCheckout}
                 >
                   Proceed to Checkout
