@@ -7,7 +7,7 @@ import axios from 'axios';
 function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [slides, setSlides] = useState([]);
-  console.log("BACKEND_URL:", process.env.REACT_APP_BACKEND_URL);
+ 
 
   // Fetch slider images from backend on mount
   useEffect(() => {
