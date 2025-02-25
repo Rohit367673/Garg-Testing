@@ -4,10 +4,20 @@ import multer from "multer";
 import fs from "fs";
 import Slider from "../Models/Slider.js";
 import mongoose from "mongoose";
+import { v2 as cloudinary } from "cloudinary";
+import dotenv from 'dotenv';
 
 const router = express.Router();
+dotenv.config(); 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,       
+  api_secret: process.env.CLOUDINARY_API_SECRET,   
+});
 
-// Configure Multer storage (reusing the uploads directory)
+
+
+// Configure Multer to temporarily store files locally
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadDir = "uploads/";
@@ -31,10 +41,10 @@ const upload = multer({
       cb(null, true);
     }
   },
-  limits: { fileSize: 10 * 1024 * 1024 }, // 5 MB limit
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB limit
 });
 
-// POST /api/slider - Upload a new slider image
+// POST /api/slider - Upload a new slider image to Cloudinary
 router.post("/slider", upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
@@ -43,15 +53,29 @@ router.post("/slider", upload.single("image"), async (req, res) => {
     }
     // Log file info for debugging
     console.log("Uploaded file details:", req.file);
-    
-    // Remove the "uploads/" prefix from the path if desired
-    const filePath = req.file.path.replace(/^uploads\//, "");
-    
-    const slider = new Slider({ imageUrl: filePath });
-    const savedSlider = await slider.save();
-    res.status(201).json({
-      message: "Slider image uploaded successfully",
-      slider: savedSlider,
+    const filePath = req.file.path;
+
+    // Upload the file to Cloudinary in the "slider_images" folder
+    cloudinary.uploader.upload(filePath, { folder: "slider_images" }, async (error, result) => {
+      if (error) {
+        console.error("Cloudinary upload error:", error);
+        return res.status(500).json({ error: "Cloudinary upload failed." });
+      }
+      console.log("Cloudinary upload result:", result);
+      
+      // Save the secure URL returned by Cloudinary in your database
+      const slider = new Slider({ imageUrl: result.secure_url });
+      const savedSlider = await slider.save();
+
+      // Remove the local file after a successful upload
+      fs.unlink(filePath, (err) => {
+        if (err) console.error("Error removing local file:", err);
+      });
+
+      res.status(201).json({
+        message: "Slider image uploaded successfully",
+        slider: savedSlider,
+      });
     });
   } catch (error) {
     console.error("Error uploading slider image:", error);
