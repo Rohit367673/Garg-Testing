@@ -16,6 +16,7 @@ import {
   Step,
   StepLabel,
 } from "@mui/material";
+import { Link } from "react-router-dom"; // Import Link
 
 const UserOrders = () => {
   const { user } = useContext(AuthContext);
@@ -84,7 +85,6 @@ const UserOrders = () => {
 
   return (
     <>
-      {/* Global styles to ensure full width on screens <= 768px */}
       <GlobalStyles
         styles={{
           "@media (max-width:768px)": {
@@ -188,51 +188,57 @@ const UserOrders = () => {
                       Items:
                     </Typography>
                     {order.cartItems.map((item, index) => (
-                      <Box
+                      // Wrap each product item with a Link that points to the product details page
+                      <Link
                         key={index}
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          mb: 2,
-                          p: 1,
-                          borderRadius: 2,
-                          backgroundColor: "grey.100",
-                        }}
+                        to={`/product/${item.productId}`}
+                        style={{ textDecoration: "none", color: "inherit" }}
                       >
-                        <CardMedia
-                          component="img"
-                          image={item.imgsrc}
-                          alt={item.productName}
+                        <Box
                           sx={{
-                            width: { xs: 60, sm: 80 },
-                            height: { xs: 60, sm: 80 },
-                            objectFit: "cover",
+                            display: "flex",
+                            alignItems: "center",
+                            mb: 2,
+                            p: 1,
                             borderRadius: 2,
-                            mr: 2,
+                            backgroundColor: "grey.100",
                           }}
-                        />
-                        <Box>
-                          <Typography variant="body1" fontWeight="bold">
-                            {item.productName}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            Price: ₹{item.price}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            Qty: {item.quantity}
-                          </Typography>
-                          {item.selectedSize && (
-                            <Typography variant="body2" color="text.secondary">
-                              Size: {item.selectedSize}
+                        >
+                          <CardMedia
+                            component="img"
+                            image={item.imgsrc}
+                            alt={item.productName}
+                            sx={{
+                              width: { xs: 60, sm: 80 },
+                              height: { xs: 60, sm: 80 },
+                              objectFit: "cover",
+                              borderRadius: 2,
+                              mr: 2,
+                            }}
+                          />
+                          <Box>
+                            <Typography variant="body1" fontWeight="bold">
+                              {item.productName}
                             </Typography>
-                          )}
-                          {item.selectedColor && (
                             <Typography variant="body2" color="text.secondary">
-                              Color: {item.selectedColor}
+                              Price: ₹{item.price}
                             </Typography>
-                          )}
+                            <Typography variant="body2" color="text.secondary">
+                              Qty: {item.quantity}
+                            </Typography>
+                            {item.selectedSize && (
+                              <Typography variant="body2" color="text.secondary">
+                                Size: {item.selectedSize}
+                              </Typography>
+                            )}
+                            {item.selectedColor && (
+                              <Typography variant="body2" color="text.secondary">
+                                Color: {item.selectedColor}
+                              </Typography>
+                            )}
+                          </Box>
                         </Box>
-                      </Box>
+                      </Link>
                     ))}
                   </Box>
                 </Card>
