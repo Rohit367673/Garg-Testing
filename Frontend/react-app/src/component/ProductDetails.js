@@ -103,9 +103,8 @@ const ProductDetails = () => {
       userId: user.id,
       productId: product._id,
       productName: product.name,
-      imgsrc: product.images?.[0]
-        ? `${process.env.REACT_APP_BACKEND_URL}/uploads/${product.images[0]}`
-        : "placeholder.jpg",
+      // Use the Cloudinary URL directly instead of a local path
+      imgsrc: product.images?.[0] ? product.images[0] : "placeholder.jpg",
       price: product.price,
       quantity: 1,
       selectedSize,
@@ -182,7 +181,7 @@ const ProductDetails = () => {
     }
   };
 
-  // Define the slider block (remains the same for both desktop and mobile)
+  // Define the slider block
   const renderSlider = (
     <Box
       sx={{
@@ -211,7 +210,8 @@ const ProductDetails = () => {
       <Fade in timeout={500}>
         <Box
           component="img"
-          src={`${process.env.REACT_APP_BACKEND_URL}/uploads/${product?.images[currentImageIndex]}`}
+          // Use the Cloudinary URL directly
+          src={product?.images[currentImageIndex]}
           alt={product?.name}
           sx={{
             width: "100%",
@@ -244,7 +244,8 @@ const ProductDetails = () => {
           <Box
             key={idx}
             component="img"
-            src={`http://localhost:3001/uploads/${img}`}
+            // Use the Cloudinary URL directly instead of a local path
+            src={img}
             alt={`Thumbnail ${idx}`}
             onClick={() => setCurrentImageIndex(idx)}
             sx={{
@@ -266,7 +267,7 @@ const ProductDetails = () => {
     </Box>
   );
 
-  // Define the product details block. On desktop we adjust the container styles.
+  // Define the product details block.
   const renderDetails = (
     <Box
       sx={{
@@ -436,11 +437,8 @@ const ProductDetails = () => {
                     >
                       <Box
                         component="img"
-                        src={
-                          item.images?.[0]
-                            ? `${process.env.REACT_APP_BACKEND_URL}/uploads/${item.images[0]}`
-                            : "placeholder.jpg"
-                        }
+                        // Use the Cloudinary URL directly
+                        src={item.images?.[0] ? item.images[0] : "placeholder.jpg"}
                         alt={item.name}
                         sx={{
                           width: "100%",
