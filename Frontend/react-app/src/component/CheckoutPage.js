@@ -43,10 +43,17 @@ const CheckoutPage = () => {
       navigate("/login");
       return;
     }
+<<<<<<< HEAD
   if (address.phone.length !== 10) {
   toast.error("Phone number must be exactly 10 digits!");
   return;
 }
+=======
+    if (address.phone.length !== 10) {
+      toast.error("Phone number must be exactly 10 digits!");
+      return;
+    }
+>>>>>>> f8b3dc6 (Describe your changes here)
 
     const userId = user.id;
 

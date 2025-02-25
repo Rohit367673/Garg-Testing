@@ -12,9 +12,12 @@ import {
   CardMedia,
   Divider,
   GlobalStyles,
+<<<<<<< HEAD
   Stepper,
   Step,
   StepLabel,
+=======
+>>>>>>> f8b3dc6 (Describe your changes here)
 } from "@mui/material";
 import { Link } from "react-router-dom"; // Import Link
 
@@ -85,6 +88,10 @@ const UserOrders = () => {
 
   return (
     <>
+<<<<<<< HEAD
+=======
+      {/* Global styles to ensure full width on screens <= 768px */}
+>>>>>>> f8b3dc6 (Describe your changes here)
       <GlobalStyles
         styles={{
           "@media (max-width:768px)": {
@@ -129,6 +136,7 @@ const UserOrders = () => {
         )}
 
         <Grid container spacing={4}>
+<<<<<<< HEAD
           {orders.map((order) => {
             const activeStep = getActiveStep(order.orderStatus);
             return (
@@ -245,6 +253,104 @@ const UserOrders = () => {
               </Grid>
             );
           })}
+=======
+          {orders.map((order) => (
+            <Grid item xs={12} sm={12} md={6} lg={4} key={order._id}>
+              <Card
+                sx={{
+                  borderRadius: 3,
+                  boxShadow: 3,
+                  display: "flex",
+                  flexDirection: "column",
+                  height: "100%",
+                  transition: "transform 0.3s",
+                  "&:hover": { transform: "scale(1.03)" },
+                }}
+              >
+                <CardContent>
+                  <Typography variant="caption" color="text.secondary">
+                    Order ID: {order._id}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Date: {new Date(order.createdAt).toLocaleDateString()}
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    fontWeight="bold"
+                    sx={{
+                      color:
+                        order.orderStatus?.toLowerCase() === "delivered"
+                          ? "green"
+                          : "text.secondary",
+                      mb: 1,
+                    }}
+                  >
+                    Status: {order.orderStatus}
+                  </Typography>
+                  <Divider sx={{ my: 1 }} />
+                  <Typography variant="body2" color="text.secondary">
+                    Payment: {order.paymentStatus}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Total: ₹{order.totalAmount}
+                  </Typography>
+                </CardContent>
+                <Box sx={{ p: 2, pt: 0, flexGrow: 1 }}>
+                  <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                    Items:
+                  </Typography>
+                  {order.cartItems.map((item, index) => (
+                    <Box
+                      key={index}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        mb: 2,
+                        p: 1,
+                        borderRadius: 2,
+                        backgroundColor: "grey.100",
+                      }}
+                    >
+                      <CardMedia
+                        component="img"
+                        image={item.imgsrc}
+                        alt={item.productName}
+                        sx={{
+                          width: { xs: 60, sm: 80 },
+                          height: { xs: 60, sm: 80 },
+                          objectFit: "cover",
+                          borderRadius: 2,
+                          mr: 2,
+                        }}
+                      />
+                      <Box>
+                        <Typography variant="body1" fontWeight="bold">
+                          {item.productName}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Price: ₹{item.price}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Qty: {item.quantity}
+                        </Typography>
+                        {item.selectedSize && (
+                          <Typography variant="body2" color="text.secondary">
+                            Size: {item.selectedSize}
+                          </Typography>
+                        )}
+                        {item.selectedColor && (
+                          <Typography variant="body2" color="text.secondary">
+                            Color: {item.selectedColor}
+                          </Typography>
+                        )}
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+              </Card>
+            </Grid>
+          ))}
+>>>>>>> f8b3dc6 (Describe your changes here)
         </Grid>
       </Container>
       <Footer />
