@@ -38,7 +38,18 @@ app.use(bodyParser.json());
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "uploads"), {
+    setHeaders: (res, filePath) => {
+      res.setHeader(
+        "Cache-Control",
+        "no-store, no-cache, must-revalidate, proxy-revalidate"
+      );
+    },
+  })
+);
+
 app.use("/api", productRoutes);
 app.use("/api", sliderRoute);
 
