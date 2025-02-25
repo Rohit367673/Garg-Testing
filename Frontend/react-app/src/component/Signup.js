@@ -26,10 +26,10 @@ function Signup() {
       toast.error("All fields are required!");
       return;
     }
-    if (Number.length !== 10) {
-      toast.error("Phone number must be exactly 10 digits!");
-      return;
-    }
+    // if (Number.length !== 12) {
+    //   toast.error("Phone number must be exactly 10 digits!");
+    //   return;
+    // }
     const signupData = { Name, Email, Pass, Number };
     navigate("/otpfield", { state: signupData });
   };

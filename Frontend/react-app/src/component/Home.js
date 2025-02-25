@@ -14,16 +14,17 @@ function Home() {
     const fetchSlides = async () => {
       try {
         const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/slider`);
-     
-        const slideUrls = res.data.map(slide => `${process.env.REACT_APP_BACKEND_URL}/uploads/` + slide.imageUrl);
+        // Use the Cloudinary URL directly from the database
+        const slideUrls = res.data.map(slide => slide.imageUrl);
         setSlides(slideUrls);
       } catch (err) {
         console.error("Error fetching slider images:", err);
       }
     };
-
+  
     fetchSlides();
   }, []);
+  
 
   // Change slide every 3 seconds if slides exist
   useEffect(() => {

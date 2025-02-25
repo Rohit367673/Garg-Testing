@@ -19,20 +19,19 @@ const AdminOrders = () => {
     fetchOrders();
   }, []);
 
-  const handleApproveOrder = async (orderId) => {
+  // A generic handler to update order status
+  const handleUpdateOrder = async (orderId, newStatus) => {
     try {
-
-      const response = await axios.put(`${process.env.REACT_APP_BACKEND_URL}/orders/${orderId}`, { orderStatus: 'Deliver soon ✅' });
+      const response = await axios.put(`${process.env.REACT_APP_BACKEND_URL}/orders/${orderId}`, { orderStatus: newStatus });
       console.log('Order updated:', response.data);
-      
-     
+
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
-          order._id === orderId ? { ...order, orderStatus: response.data.orderStatus } : order
+          order._id === orderId ? { ...order, orderStatus: newStatus } : order
         )
       );
     } catch (error) {
-      console.error('Error approving order:', error);
+      console.error('Error updating order:', error);
     }
   };
 
@@ -44,9 +43,7 @@ const AdminOrders = () => {
       <Grid container spacing={3}>
         {orders.map((order) => {
           // Normalize order status for comparison
-          const status = order.orderStatus
-            ? order.orderStatus.toLowerCase()
-            : "";
+          const status = order.orderStatus ? order.orderStatus.toLowerCase() : "";
           return (
             <Grid item xs={12} key={order._id}>
               <Paper sx={{ padding: 2, marginBottom: 2 }}>
@@ -116,17 +113,36 @@ const AdminOrders = () => {
                 </Box>
 
                 <Box mt={2}>
-                  {status === "pending" ? (
+                  {status === "pending" && (
                     <Button
                       variant="contained"
                       color="primary"
-                      onClick={() => handleApproveOrder(order._id)}
+                      onClick={() => handleUpdateOrder(order._id, "approved")}
                     >
                       Approve Order
                     </Button>
-                  ) : (
+                  )}
+                  {status === "approved" && (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={() => handleUpdateOrder(order._id, "shipped")}
+                    >
+                      Order Shipped
+                    </Button>
+                  )}
+                  {status === "shipped" && (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={() => handleUpdateOrder(order._id, "delivered")}
+                    >
+                      Order Delivered
+                    </Button>
+                  )}
+                  {status === "delivered" && (
                     <Typography variant="body1" sx={{ color: "green" }}>
-                      Approved Order
+                      Delivered
                     </Typography>
                   )}
                 </Box>

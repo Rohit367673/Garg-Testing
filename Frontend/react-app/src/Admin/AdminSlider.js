@@ -1,4 +1,3 @@
-// AdminSlider.js
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import {
@@ -17,14 +16,15 @@ function AdminSlider() {
   const [selectedFile, setSelectedFile] = useState(null);
   const fileInputRef = useRef(null);
 
-
   useEffect(() => {
     fetchImages();
   }, []);
 
   const fetchImages = async () => {
     try {
-      const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/slider`);
+      const res = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/api/slider`
+      );
       setImages(res.data);
     } catch (err) {
       console.error("Error fetching slider images", err);
@@ -127,7 +127,8 @@ function AdminSlider() {
               <CardMedia
                 component="img"
                 height="150"
-                image={`${process.env.REACT_APP_BACKEND_URL}/uploads/${image.imageUrl}`}
+                // Use the full Cloudinary URL directly
+                image={image.imageUrl}
                 alt="Slider"
               />
               <CardActions>

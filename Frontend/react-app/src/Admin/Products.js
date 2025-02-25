@@ -61,12 +61,13 @@ const Products = () => {
             <TableRow key={product._id}>
               <TableCell>
                 {product.images && product.images[0] ? (
-                  <img
-                    src={`${process.env.REACT_APP_BACKEND_URL}/uploads/${product.images[0]}`}
-                    alt={product.name}
-                    width="50"
-                    height="50"
-                  />
+               <img
+               src={product.images[0]}
+               alt={product.name}
+               width="50"
+               height="50"
+             />
+             
                 ) : (
                   "No Image"
                 )}

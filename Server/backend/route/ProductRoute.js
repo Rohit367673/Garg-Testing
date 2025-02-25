@@ -1,15 +1,24 @@
+// route/ProductRoute.js
 import express from "express";
 import multer from "multer";
 import fs from "fs";
 import ProductModel from "../Models/Product.js";
 import mongoose from "mongoose";
-
-
+import { v2 as cloudinary } from "cloudinary";
+import dotenv from "dotenv"
 const router = express.Router();
-// Multer setup for file uploads
+dotenv.config();
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
+  api_key: process.env.CLOUDINARY_API_KEY,       
+  api_secret: process.env.CLOUDINARY_API_SECRET,   
+});
+
+// Multer setup for temporary file storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir =  "uploads/";
+    const uploadDir = "uploads/";
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -23,10 +32,15 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
-    const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif", "image/webp"];
-
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/jpg",
+      "image/gif",
+      "image/webp",
+    ];
     if (!allowedTypes.includes(file.mimetype)) {
-      cb(new Error("Only JPEG, PNG, and JPG files are allowed."));
+      cb(new Error("Only JPEG, PNG, JPG, GIF, and WEBP files are allowed."));
     } else {
       cb(null, true);
     }
@@ -34,54 +48,59 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-
-
-
-
-// POST /api/products - Create a new product
+// POST /api/products - Create a new product with images uploaded to Cloudinary
 router.post("/products", upload.array("images", 10), async (req, res) => {
-    try {
-      const { name, description, price, size, color, stock, category } = req.body;
-  
-      if (!name || !price || !category) {
-        return res.status(400).json({ error: "Name, price, and category are required." });
-      }
-  
-      // Store the image file names without the 'uploads/' prefix
-      const imagePaths = req.files.map((file) => file.path.replace(/^uploads\//, ''));
-  
-      const product = new ProductModel({
-        name,
-        description,
-        price,
-        size,
-        color,
-        stock,
-        
-        category,
-        images: imagePaths,
-      });
-  
-      const savedProduct = await product.save();
-      res.status(201).json({
-        message: "Product created successfully",
-        product: savedProduct,
-      });
-    } catch (error) {
-      console.error("Error adding product:", error);
-      res.status(500).json({ error: error.message || "Internal Server Error" });
+  try {
+    const { name, description, price, size, color, stock, category } = req.body;
+
+    if (!name || !price || !category) {
+      return res.status(400).json({ error: "Name, price, and category are required." });
     }
-  });
-  
+
+    // Upload each file to Cloudinary (using a folder "product_images")
+    const uploadPromises = req.files.map((file) =>
+      cloudinary.uploader.upload(file.path, { folder: "product_images" })
+    );
+    const uploadResults = await Promise.all(uploadPromises);
+    const imageUrls = uploadResults.map((result) => result.secure_url);
+
+    // Optionally delete the local files after upload
+    req.files.forEach((file) => {
+      fs.unlink(file.path, (err) => {
+        if (err) console.error("Error deleting local file:", err);
+      });
+    });
+
+    const product = new ProductModel({
+      name,
+      description,
+      price,
+      size,
+      color,
+      stock,
+      category,
+      images: imageUrls,
+    });
+
+    const savedProduct = await product.save();
+    res.status(201).json({
+      message: "Product created successfully",
+      product: savedProduct,
+    });
+  } catch (error) {
+    console.error("Error adding product:", error);
+    res.status(500).json({ error: error.message || "Internal Server Error" });
+  }
+});
+
 // GET /api/products - Fetch all products or filter by category
 router.get("/products", async (req, res) => {
   try {
     const { category } = req.query;
-
-    const products = category && category !== "All"
-      ? await ProductModel.find({ category })
-      : await ProductModel.find();
-
+    const products =
+      category && category !== "All"
+        ? await ProductModel.find({ category })
+        : await ProductModel.find();
     res.json(products);
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -104,34 +123,30 @@ router.delete("/products/:id", async (req, res) => {
 });
 
 router.get("/products/:id", async (req, res) => {
-    const { id } = req.params;
-    
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid product ID" });
+  const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid product ID" });
+  }
+  try {
+    const product = await ProductModel.findById(id);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
     }
-  
-    try {
-      const product = await ProductModel.findById(id);
-      if (!product) {
-        return res.status(404).json({ message: "Product not found" });
-      }
-      res.json(product);
-    } catch (error) {
-      console.error("Error fetching product:", error);
-      res.status(500).json({ message: "Error fetching product" });
-    }
-  });
-  router.get("/recommended-products", async (req, res) => {
-    try {
-      const { category } = req.query;
-      const recommendedProducts = await ProductModel.find({ category }).limit(5);
-      res.json(recommendedProducts);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-  
-  
-  
+    res.json(product);
+  } catch (error) {
+    console.error("Error fetching product:", error);
+    res.status(500).json({ message: "Error fetching product" });
+  }
+});
+
+router.get("/recommended-products", async (req, res) => {
+  try {
+    const { category } = req.query;
+    const recommendedProducts = await ProductModel.find({ category }).limit(5);
+    res.json(recommendedProducts);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 export default router;
