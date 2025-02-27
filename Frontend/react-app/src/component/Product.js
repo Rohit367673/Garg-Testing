@@ -12,7 +12,8 @@ import {
   Select, 
   MenuItem, 
   FormControl, 
-  InputLabel 
+  InputLabel,
+  CircularProgress
 } from "@mui/material";
 import "./Product.css";
 import Footer from "./Footer";
@@ -22,13 +23,20 @@ const Product = () => {
   const [visibleProducts, setVisibleProducts] = useState(8);
   const [category, setCategory] = useState("all");
   const [sort, setSort] = useState("default");
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     axios
       .get(`${process.env.REACT_APP_BACKEND_URL}/api/products`)
-      .then((response) => setProducts(response.data))
-      .catch((error) => console.error("Error fetching products:", error));
+      .then((response) => {
+        setProducts(response.data);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching products:", error);
+        setIsLoading(false);
+      });
   }, []);
 
   // Filter and sort products
@@ -87,58 +95,74 @@ const Product = () => {
           </Grid>
         </Grid>
 
-        {/* Product List */}
-        <Grid container spacing={2}>
-          {sortedProducts.slice(0, visibleProducts).map((product, index) => (
-            <Grid 
-              item 
-              key={index} 
-              xs={12} 
-              sm={6} 
-              md={4} 
-              lg={3} 
-              sx={{ display: "flex", justifyContent: "center" }}
-            >
-              <Card sx={{ width: "100%", maxWidth: 280, boxShadow: 3, borderRadius: 2 }}>
-                <CardMedia
-                  component="img"
-                  // Use the Cloudinary URL directly
-                  image={product.images?.[0]}
-                  alt={product.name}
-                  sx={{ 
-                    height: { xs: 180, sm: 200, md: 240 },
-                    objectFit: "contain"
-                  }}
-                />
-                <CardContent>
-                  <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                    {product.name}
-                  </Typography>
-                  <Typography variant="h6" color="primary" sx={{ marginTop: 1 }}>
-                    {product.price} Rs
-                  </Typography>
-                  <Button 
-                    variant="contained" 
-                    color="primary" 
-                    fullWidth 
-                    sx={{ marginTop: 2 }} 
-                    onClick={() => handleBuyClick(product)}
-                  >
-                    Buy Now
-                  </Button>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-
-        {/* Load More Button */}
-        {visibleProducts < sortedProducts.length && (
-          <Grid container justifyContent="center" sx={{ marginTop: 3 }}>
-            <Button variant="outlined" onClick={() => setVisibleProducts(visibleProducts + 8)}>
-              Load More
-            </Button>
+        {/* Loading Spinner */}
+        {isLoading ? (
+          <Grid 
+            container 
+            justifyContent="center" 
+            alignItems="center" 
+            sx={{ minHeight: "80vh" }}
+          >
+            <CircularProgress />
           </Grid>
+        ) : (
+          <>
+            {/* Product List */}
+            <Grid container spacing={2}>
+              {sortedProducts.slice(0, visibleProducts).map((product, index) => (
+                <Grid 
+                  item 
+                  key={index} 
+                  xs={12} 
+                  sm={6} 
+                  md={4} 
+                  lg={3} 
+                  sx={{ display: "flex", justifyContent: "center" }}
+                >
+                  <Card sx={{ width: "100%", maxWidth: 280, boxShadow: 3, borderRadius: 2 }}>
+                    <CardMedia
+                      component="img"
+                      image={product.images?.[0]}
+                      alt={product.name}
+                      sx={{ 
+                        height: { xs: 180, sm: 200, md: 240 },
+                        objectFit: "contain"
+                      }}
+                    />
+                    <CardContent>
+                      <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                        {product.name}
+                      </Typography>
+                      <Typography variant="h6" color="primary" sx={{ marginTop: 1 }}>
+                        {product.price} Rs
+                      </Typography>
+                      <Button 
+                        variant="contained" 
+                        color="primary" 
+                        fullWidth 
+                        sx={{ marginTop: 2 }} 
+                        onClick={() => handleBuyClick(product)}
+                      >
+                        Buy Now
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+
+            {/* Load More Button */}
+            {visibleProducts < sortedProducts.length && (
+              <Grid container justifyContent="center" sx={{ marginTop: 3 }}>
+                <Button 
+                  variant="outlined" 
+                  onClick={() => setVisibleProducts(visibleProducts + 8)}
+                >
+                  Load More
+                </Button>
+              </Grid>
+            )}
+          </>
         )}
       </Container>
       <Footer/>
