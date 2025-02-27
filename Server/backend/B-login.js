@@ -36,7 +36,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-console.log(process.env.MONGO_URI)
+
 
 app.use(
   "/uploads",

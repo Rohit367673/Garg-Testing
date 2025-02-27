@@ -1,11 +1,12 @@
 // OtpField.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useContext } from "react";
 import { Box, TextField, Button, Typography } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import axios from "axios";
 // Import your auth instance from firebaseConfig
-import { auth } from "../firebase.Config";
+import { auth, } from "../firebase.Config";
+import { AuthContext } from "./AuthContext";
 
 // Import these directly from firebase/auth
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
@@ -13,7 +14,7 @@ import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 const OtpField = () => {
   const location = useLocation();
   const navigate = useNavigate();
-
+  const { login } = useContext(AuthContext);
   const { Name, Email, Pass, Number } = location.state || {};
 
   // If the user came here without a phone number, redirect:
@@ -87,23 +88,30 @@ const OtpField = () => {
       return;
     }
     try {
-      await confirmationResult.confirm(otp);
-      setMessage("OTP verified successfully.");
-      toast.success("Registration successful!");
-      const signupData = { Name, Email, Pass, Number };
+      const result = await confirmationResult.confirm(otp);
+      // Optionally, you can grab the firebase user data if needed:
+      const firebaseUser = result.user;
+      
+      // Prepare the signup data; you might want to include firebaseUser.uid if needed
+      const signupData = { Name, Email, Pass, Number, firebaseUid: firebaseUser.uid };
+      
       const res = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/signup`, signupData);
       if (res.data.success) {
+        // Make sure your backend returns a token and user data
+        const { token, user } = res.data;
+        // Update your authentication context just like in your Google flow
+        login(token, user);
+        navigate("/Account", { state: { ...user } });
         toast.success("Registration successful!");
-        navigate("/account", { state: { Name, Email, Number } });
       } else {
         toast.error("Registration failed on the backend.");
       }
     } catch (error) {
-      console.error("Error verifying OTP:", error.code, error.message);
+      console.error("Error verifying OTP:", error);
       setMessage("Invalid OTP. Please try again.");
     }
-  };
-  
+    
+  }
   
 
   return (
