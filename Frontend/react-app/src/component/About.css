@@ -114,22 +114,7 @@ body {
 .brand-logo:hover {
   transform: scale(1.1);
 }
-@media screen and (max-width: 768px) {
-  /* Use grid layout to have 2 logos per row */
-  .brands {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-    justify-items: center;
-  }
-  
-  /* Optionally, adjust logo size if needed */
-  .brand-logo {
-    margin: 0.5rem;
-    width: 80px;
-    height: 80px;
-  }
-}
+
 /* Animations */
 @keyframes fadeInDown {
   from {
@@ -254,7 +239,8 @@ body {
 }
 
 @keyframes sliderAnimation {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateX(0);
   }
   33% {
@@ -262,39 +248,5 @@ body {
   }
   66% {
     transform: translateX(-620px);
-  }
-}
-@media screen and (max-width: 768px) {
-  /* Adjust hero section */
-  .hero-section {
-    height: auto;
-    padding: 2rem 1rem;
-  }
-  .hero-content h1 {
-    font-size: 2.5rem;
-  }
-  .hero-content p {
-    font-size: 1.2rem;
-  }
-  /* Stack achievements and brands vertically */
-  .achievements, .brands {
-    flex-direction: column;
-    align-items: center;
-  }
-  .achievement, .brand-logo {
-    flex: 1 0 80%;
-    margin: 1rem 0;
-  }
-  /* Stack promotion container contents */
-  .promotion-container {
-    flex-direction: column;
-  }
-  .P-left-content, .P-right-slider {
-    width: 100%;
-    padding: 10px;
-  }
-  /* Make slider slides full-width */
-  .P-slide {
-    flex: 0 0 100%;
   }
 }

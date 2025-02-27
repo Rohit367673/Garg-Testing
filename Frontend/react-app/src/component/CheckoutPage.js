@@ -44,10 +44,12 @@ const CheckoutPage = () => {
       return;
     }
 
+
   if (address.phone.length !== 10) {
   toast.error("Phone number must be exactly 10 digits!");
   return;
 }
+
 
     if (address.phone.length !== 10) {
       toast.error("Phone number must be exactly 10 digits!");

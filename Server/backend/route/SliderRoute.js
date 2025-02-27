@@ -44,7 +44,7 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB limit
 });
 
-// POST /api/slider - Upload a new slider image to Cloudinary
+
 router.post("/slider", upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
