@@ -138,6 +138,8 @@ function Contact() {
                   type="submit"
                   sx={{
                     py: 1.5,
+                    background: 'linear-gradient(135deg, #ff7e5f, #feb47b)',
+                    '&:hover': {         background: 'linear-gradient(135deg, #ff7e5f, #feb47b)',}
                   }}
                 >
                   Send Message
