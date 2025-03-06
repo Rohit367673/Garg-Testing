@@ -8,16 +8,13 @@ import {
   Button,
   Paper,
   Box,
-  useMediaQuery,
-  useTheme
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import Footer from './Footer';
 
 function Contact() {
   const theme = useTheme();
-  // Check for mobile using MUI breakpoints
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -27,13 +24,16 @@ function Contact() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({...formData, [name]: value});
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/send-email`, formData);
+      const response = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/send-email`,
+        formData
+      );
       alert(response.data.message);
     } catch (error) {
       alert("Failed to send message. Please try again.");
@@ -43,37 +43,46 @@ function Contact() {
 
   return (
     <>
-      {/* Header Section */}
       <Box
         sx={{
           background: 'linear-gradient(135deg, #ff7e5f, #feb47b)',
-          py: { xs: 4, sm: 6 },
+          py: 4,
           textAlign: 'center',
           color: 'common.white',
         }}
       >
         <Container maxWidth="md">
-          <Typography variant={isMobile ? "h4" : "h3"} component="h1" gutterBottom>
+          <Typography variant="h3" component="h1" gutterBottom>
             Get In Touch With Us
           </Typography>
           <Typography variant="body1" sx={{ mt: 1 }}>
-            For more information about our products and services, drop us an email!
+            For more information about our products & services, drop us an email!
           </Typography>
         </Container>
       </Box>
 
-      {/* Form Section */}
-      <Container maxWidth="sm" sx={{ my: { xs: 4, sm: 6 } }}>
+      <Container maxWidth="sm" sx={{ my: 4 }}>
         <Paper
           elevation={6}
           sx={{
-            p: { xs: 3, sm: 4 },
+            p: 3,
             borderRadius: 2,
             backgroundColor: 'background.paper',
           }}
         >
           <form onSubmit={handleSubmit}>
-            <Grid container spacing={2}>
+            <Grid
+              container
+              spacing={2}
+              sx={{
+                // Force .MuiGrid-item to be maxWidth:100% on small screens
+                '& .MuiGrid-item': {
+                  [theme.breakpoints.down('sm')]: {
+                    maxWidth: '100% !important',
+                  },
+                },
+              }}
+            >
               <Grid item xs={12}>
                 <TextField
                   fullWidth
@@ -129,8 +138,6 @@ function Contact() {
                   type="submit"
                   sx={{
                     py: 1.5,
-                    background: 'linear-gradient(135deg, #ff7e5f, #feb47b)',
-                    '&:hover': {         background: 'linear-gradient(135deg, #ff7e5f, #feb47b)',}
                   }}
                 >
                   Send Message
