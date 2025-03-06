@@ -37,6 +37,7 @@ import AdminSlider from "./Admin/AdminSlider";
 
 import Product from "./component/Product";
 import SearchRecommendation from "./component/SearchRecommendation";
+import TermsAndPolicy from "./component/TermsPolicy";
 
 function App() {
   return (
@@ -56,6 +57,7 @@ function App() {
             <Route path="/Signup" element={<Signup />} />
             <Route path="/Otpfield" element={<Otpfield/>}/>
             <Route path="/SearchRecommendation" element={<SearchRecommendation/>}/>
+            <Route path="/TermsPolicy" element={<TermsAndPolicy/>}/>
 
             {/* Protected User Routes */}
             <Route path="/Cart" element={<ProtectedUserRoute element={Cart} />} />

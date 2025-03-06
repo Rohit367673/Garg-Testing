@@ -1,13 +1,14 @@
 // route/ProductRoute.js
 import express from "express";
 import multer from "multer";
-import fs from "fs";
 import ProductModel from "../Models/Product.js";
 import mongoose from "mongoose";
 import { v2 as cloudinary } from "cloudinary";
-import dotenv from "dotenv"
-const router = express.Router();
+import dotenv from "dotenv";
 dotenv.config();
+
+const router = express.Router();
+
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
@@ -15,20 +16,8 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,   
 });
 
-// Multer setup for temporary file storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = "uploads/";
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
-});
-
+// Use multer's memory storage so files remain in memory (as a buffer)
+const storage = multer.memoryStorage();
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
@@ -57,19 +46,14 @@ router.post("/products", upload.array("images", 10), async (req, res) => {
       return res.status(400).json({ error: "Name, price, and category are required." });
     }
 
-    // Upload each file to Cloudinary (using a folder "product_images")
-    const uploadPromises = req.files.map((file) =>
-      cloudinary.uploader.upload(file.path, { folder: "product_images" })
-    );
+    // For each file, convert the buffer to a Data URI and upload to Cloudinary
+    const uploadPromises = req.files.map((file) => {
+      const dataURI = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
+      return cloudinary.uploader.upload(dataURI, { folder: "product_images" });
+    });
+
     const uploadResults = await Promise.all(uploadPromises);
     const imageUrls = uploadResults.map((result) => result.secure_url);
-
-    // Optionally delete the local files after upload
-    req.files.forEach((file) => {
-      fs.unlink(file.path, (err) => {
-        if (err) console.error("Error deleting local file:", err);
-      });
-    });
 
     const product = new ProductModel({
       name,

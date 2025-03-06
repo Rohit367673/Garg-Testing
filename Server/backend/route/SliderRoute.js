@@ -1,36 +1,21 @@
 // route/SliderRoute.js
 import express from "express";
 import multer from "multer";
-import fs from "fs";
 import Slider from "../Models/Slider.js";
-import mongoose from "mongoose";
 import { v2 as cloudinary } from "cloudinary";
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 
 const router = express.Router();
-dotenv.config(); 
+dotenv.config();
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,       
-  api_secret: process.env.CLOUDINARY_API_SECRET,   
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-
-
-// Configure Multer to temporarily store files locally
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = "uploads/";
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
-});
-
+// Use multer's memory storage so files stay in memory (as a buffer)
+const storage = multer.memoryStorage();
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
@@ -44,42 +29,46 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB limit
 });
 
-
 router.post("/slider", upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
       console.error("No file was uploaded.");
       return res.status(400).json({ error: "No file uploaded." });
     }
-    // Log file info for debugging
     console.log("Uploaded file details:", req.file);
-    const filePath = req.file.path;
 
-    // Upload the file to Cloudinary in the "slider_images" folder
-    cloudinary.uploader.upload(filePath, { folder: "slider_images" }, async (error, result) => {
-      if (error) {
-        console.error("Cloudinary upload error:", error);
-        return res.status(500).json({ error: "Cloudinary upload failed." });
+    // Convert the file buffer to a Data URI
+    const dataURI = `data:${req.file.mimetype};base64,${req.file.buffer.toString(
+      "base64"
+    )}`;
+
+    // Upload the Data URI to Cloudinary (in the "slider_images" folder)
+    cloudinary.uploader.upload(
+      dataURI,
+      { folder: "slider_images" },
+      async (error, result) => {
+        if (error) {
+          console.error("Cloudinary upload error:", error);
+          return res.status(500).json({ error: "Cloudinary upload failed." });
+        }
+        console.log("Cloudinary upload result:", result);
+
+        // Save the secure URL returned by Cloudinary in your database
+        const slider = new Slider({ imageUrl: result.secure_url });
+        const savedSlider = await slider.save();
+
+        // Since the file is in memory, there's no local file to remove
+        res.status(201).json({
+          message: "Slider image uploaded successfully",
+          slider: savedSlider,
+        });
       }
-      console.log("Cloudinary upload result:", result);
-      
-      // Save the secure URL returned by Cloudinary in your database
-      const slider = new Slider({ imageUrl: result.secure_url });
-      const savedSlider = await slider.save();
-
-      // Remove the local file after a successful upload
-      fs.unlink(filePath, (err) => {
-        if (err) console.error("Error removing local file:", err);
-      });
-
-      res.status(201).json({
-        message: "Slider image uploaded successfully",
-        slider: savedSlider,
-      });
-    });
+    );
   } catch (error) {
     console.error("Error uploading slider image:", error);
-    res.status(500).json({ error: error.message || "Internal Server Error" });
+    res
+      .status(500)
+      .json({ error: error.message || "Internal Server Error" });
   }
 });
 

@@ -84,6 +84,10 @@ function AdminSlider() {
       console.error("Error deleting slider image", err);
     }
   };
+  const getImageSrc = (url) => {
+    return url.startsWith("http") ? url : `/uploads/${url}`;
+  };
+  
 
   return (
     <Box sx={{ p: 4 }}>
@@ -124,13 +128,13 @@ function AdminSlider() {
         {images.map((image) => (
           <Grid item xs={12} sm={6} md={4} key={image._id}>
             <Card>
-              <CardMedia
-                component="img"
-                height="150"
-                // Use the full Cloudinary URL directly
-                image={image.imageUrl}
-                alt="Slider"
-              />
+            <CardMedia
+  component="img"
+  height="150"
+  image={getImageSrc(image.imageUrl)}
+  alt="Slider"
+/>
+
               <CardActions>
                 <Button
                   size="small"

@@ -20,7 +20,7 @@ import dotenv from "dotenv";
 import crypto from "crypto";
 import admin from "firebase-admin";
 import ReviewsModel from "./Models/Reviews.js";
-
+import ShipRocket from "./route/ShipRocket.js"
 dotenv.config();
 
 const app = express();
@@ -52,6 +52,7 @@ app.use(
 
 app.use("/api", productRoutes);
 app.use("/api", sliderRoute);
+app.use("/shiprocket",ShipRocket)
 
 
 mongoose
@@ -61,9 +62,10 @@ mongoose
 
 // Payment part
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || "rzp_test_cqRGqNXYhc4b3x",
+  key_id: process.env.RAZORPAY_KEY_ID ,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
+
 
 app.post("/create-order", async (req, res) => {
   try {
