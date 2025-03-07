@@ -37,7 +37,7 @@ router.post("/send-email-otp", async (req, res) => {
     subject: "Your Email Verification OTP",
     html: `
       <div style="font-family: Arial, sans-serif; text-align: center;">
-        <h2 style="color: #4CAF50;">Welcome to [Your App Name]!</h2>
+        <h2 style="color: #4CAF50;">Welcome to Garg Exclusive </h2>
         <p style="font-size: 16px;">Your One-Time Password (OTP) for email verification is:</p>
         <h1 style="color: #FF5722;">${otp}</h1>
         <p style="font-size: 14px;">Please enter this OTP on the signup page. It is valid for 10 minutes.</p>
