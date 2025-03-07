@@ -21,6 +21,9 @@ import crypto from "crypto";
 import admin from "firebase-admin";
 import ReviewsModel from "./Models/Reviews.js";
 import ShipRocket from "./route/ShipRocket.js"
+import TwilioRoute from "./route/TwilioRoute.js"
+import twilioOtpRouter from "./route/TwilioOtp.js"
+import EmailOtp from "./route/EmailOtp.js"
 dotenv.config();
 
 const app = express();
@@ -36,7 +39,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-console.log(process.env.MONGO_URI)
+
 
 app.use(
   "/uploads",
@@ -53,7 +56,9 @@ app.use(
 app.use("/api", productRoutes);
 app.use("/api", sliderRoute);
 app.use("/shiprocket",ShipRocket)
-
+app.use("/api/whatsapp",TwilioRoute)
+app.use("/api/otp", twilioOtpRouter);
+app.use("/api/otp",EmailOtp)
 
 mongoose
   .connect(process.env.MONGO_URI)
@@ -557,8 +562,8 @@ app.post("/admin/login", (req, res) => {
   console.log("Admin login attempt:", req.body);
   const { Email, Pass } = req.body;
 
-  const adminEmail = process.env.ADMIN_EMAIL || "rohit367@gmail.com";
-  const adminPassword = process.env.ADMIN_PASSWORD || "rohit367673";
+  const adminEmail = process.env.ADMIN_EMAIL 
+  const adminPassword = process.env.ADMIN_PASSWORD ;
 
   console.log("Expected admin email:", adminEmail);
   console.log("Expected admin password:", adminPassword);

@@ -13,7 +13,8 @@ import {
   MenuItem, 
   FormControl, 
   InputLabel,
-  CircularProgress
+  CircularProgress,
+  Box
 } from "@mui/material";
 import "./Product.css";
 import Footer from "./Footer";
@@ -39,11 +40,13 @@ const Product = () => {
       });
   }, []);
 
-  // Filter and sort products
+  // Filter products based on Category
+  // Using the 'Catagory' field (adjust if needed)
   const filteredProducts = products.filter((product) =>
-    category === "all" || product.category === category
+    category === "all" || product.Catagory === category
   );
 
+  // Sort products
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     if (sort === "price-low") return a.price - b.price;
     if (sort === "price-high") return b.price - a.price;
@@ -165,7 +168,7 @@ const Product = () => {
           </>
         )}
       </Container>
-      <Footer/>
+      <Footer />
     </>
   );
 };

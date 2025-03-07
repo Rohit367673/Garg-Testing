@@ -18,6 +18,9 @@ import {
   FormControlLabel,
   Radio,
   Divider,
+  Box,
+  Grow,
+  Fade,
 } from "@mui/material";
 
 const CheckoutPage = () => {
@@ -43,12 +46,73 @@ const CheckoutPage = () => {
 
   const [paymentMethod, setPaymentMethod] = useState("ONLINE");
 
+  // OTP-related state
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setAddress((prev) => ({
       ...prev,
       [name]: value,
     }));
+  };
+
+  // Function to send OTP
+  const handleSendOTP = async () => {
+    if (!address.phone) {
+      toast.error("Please enter a phone number.");
+      return;
+    }
+    try {
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/otp/send-otp`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone: `+91${address.phone}` }),
+        }
+      );
+      const data = await res.json();
+      if (res.ok) {
+        toast.success("OTP sent successfully!");
+        setOtpSent(true);
+      } else {
+        toast.error(data.error || "Error sending OTP.");
+      }
+    } catch (error) {
+      console.error("Error sending OTP:", error);
+      toast.error("Error sending OTP. Please try again.");
+    }
+  };
+
+  // Function to verify OTP
+  const handleVerifyOTP = async () => {
+    if (!otp) {
+      toast.error("Please enter the OTP.");
+      return;
+    }
+    try {
+      const res = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/otp/verify-otp`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone: `+91${address.phone}`, code: otp }),
+        }
+      );
+      const data = await res.json();
+      if (res.ok && data.status === "approved") {
+        toast.success("Phone verified successfully!");
+        setPhoneVerified(true);
+      } else {
+        toast.error("Incorrect OTP or verification failed.");
+      }
+    } catch (error) {
+      console.error("Error verifying OTP:", error);
+      toast.error("Error verifying OTP. Please try again.");
+    }
   };
 
   // Function to call backend ShipRocket endpoint after order creation
@@ -64,7 +128,7 @@ const CheckoutPage = () => {
             addressInfo: orderDetails.addressInfo,
             totalAmount: orderDetails.totalAmount,
             orderId: orderDetails.orderId,
-            paymentMethod: method, // Pass COD/ONLINE flag if needed
+            paymentMethod: method,
           }),
         }
       );
@@ -82,6 +146,10 @@ const CheckoutPage = () => {
     if (!user) {
       alert("User is not logged in!");
       navigate("/login");
+      return;
+    }
+    if (!phoneVerified) {
+      toast.error("Please verify your phone number first.");
       return;
     }
     if (address.phone.length !== 10) {
@@ -127,7 +195,9 @@ const CheckoutPage = () => {
         },
         "COD"
       );
-      toast.success("COD order placed! Payment will be collected on delivery.");
+      toast.success(
+        "COD order placed! Payment will be collected on delivery."
+      );
     } catch (error) {
       alert("Error creating COD order. Please try again.");
       console.error(error);
@@ -139,6 +209,10 @@ const CheckoutPage = () => {
     if (!user) {
       alert("User is not logged in!");
       navigate("/login");
+      return;
+    }
+    if (!phoneVerified) {
+      toast.error("Please verify your phone number first.");
       return;
     }
     if (address.phone.length !== 10) {
@@ -208,6 +282,7 @@ const CheckoutPage = () => {
     }
   };
 
+  // Main form submission (decides payment method)
   const handleSubmit = (e) => {
     e.preventDefault();
     if (paymentMethod === "COD") {
@@ -218,12 +293,22 @@ const CheckoutPage = () => {
   };
 
   return (
-    <>
-      <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-        <Paper elevation={4} sx={{ p: 4 }}>
-          <Typography variant="h4" align="center" gutterBottom>
-            Checkout
-          </Typography>
+    <Grow in timeout={800}>
+      <Container maxWidth="sm" sx={{ mt: 4, mb: 4 }}>
+        <Paper
+          elevation={6}
+          sx={{
+            p: 4,
+            borderRadius: 3,
+            background:
+              "linear-gradient(135deg, rgba(255,255,255,0.9), rgba(240,240,240,0.9))",
+          }}
+        >
+          <Fade in timeout={1000}>
+            <Typography variant="h4" align="center" gutterBottom sx={{ fontWeight: 600 }}>
+              Checkout
+            </Typography>
+          </Fade>
           {cartItems.length === 0 ? (
             <Typography variant="body1" align="center">
               Your cart is empty. Please add items first.
@@ -233,7 +318,9 @@ const CheckoutPage = () => {
               <Grid container spacing={2}>
                 {/* Delivery Information */}
                 <Grid item xs={12}>
-                  <Typography variant="h6">Delivery Information</Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 500, mb: 1 }}>
+                    Delivery Information
+                  </Typography>
                 </Grid>
                 {[
                   { label: "Name", name: "name" },
@@ -244,7 +331,7 @@ const CheckoutPage = () => {
                   { label: "Postal Code", name: "postalCode" },
                   { label: "State", name: "state" },
                 ].map((field) => (
-                  <Grid item xs={12} sm={6} key={field.name}>
+                  <Grid item xs={12} key={field.name}>
                     <TextField
                       fullWidth
                       label={field.label}
@@ -253,13 +340,52 @@ const CheckoutPage = () => {
                       onChange={handleChange}
                       required
                       variant="outlined"
+                      sx={{ backgroundColor: "#fff", borderRadius: 1 }}
                     />
                   </Grid>
                 ))}
+
+                {/* OTP Section */}
+                <Grid item xs={12}>
+                  {!otpSent ? (
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      onClick={handleSendOTP}
+                      fullWidth
+                      sx={{ py: 1.5, fontWeight: "bold" }}
+                    >
+                      Send OTP
+                    </Button>
+                  ) : (
+                    <>
+                      <TextField
+                        fullWidth
+                        label="Enter OTP"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        variant="outlined"
+                        sx={{ mb: 1, backgroundColor: "#fff", borderRadius: 1 }}
+                      />
+                      <Button
+                        variant="contained"
+                        color="secondary"
+                        onClick={handleVerifyOTP}
+                        fullWidth
+                        sx={{ py: 1.5, fontWeight: "bold" }}
+                      >
+                        Verify OTP
+                      </Button>
+                    </>
+                  )}
+                </Grid>
+
                 {/* Payment Method */}
                 <Grid item xs={12}>
-                  <FormControl component="fieldset">
-                    <FormLabel component="legend">Payment Method</FormLabel>
+                  <FormControl component="fieldset" fullWidth>
+                    <FormLabel component="legend" sx={{ mb: 1 }}>
+                      Payment Method
+                    </FormLabel>
                     <RadioGroup
                       row
                       value={paymentMethod}
@@ -278,11 +404,15 @@ const CheckoutPage = () => {
                     </RadioGroup>
                   </FormControl>
                 </Grid>
+
                 <Grid item xs={12}>
                   <Divider sx={{ my: 2 }} />
-                  <Typography variant="h6">Order Summary</Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 500 }}>
+                    Order Summary
+                  </Typography>
                   <Typography variant="body1">Total: ₹{Total}</Typography>
                 </Grid>
+
                 <Grid item xs={12}>
                   <Button
                     type="submit"
@@ -290,6 +420,8 @@ const CheckoutPage = () => {
                     color="primary"
                     fullWidth
                     size="large"
+                    disabled={!phoneVerified}
+                    sx={{ py: 1.8, fontWeight: "bold", mt: 1 }}
                   >
                     Place Order
                   </Button>
@@ -299,8 +431,7 @@ const CheckoutPage = () => {
           )}
         </Paper>
       </Container>
-      <Footer />
-    </>
+    </Grow>
   );
 };
 

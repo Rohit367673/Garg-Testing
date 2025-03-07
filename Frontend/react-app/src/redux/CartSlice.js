@@ -90,6 +90,13 @@ const cartSlice = createSlice({
     setCartId: (state, action) => {
       state.cartId = action.payload;
     },
+
+    // New reducer to set the shipping cost
+    setShipping: (state, action) => {
+      state.shipping = action.payload;
+      // Optionally, recalculate the total
+      state.Total = state.subTotal + state.shipping;
+    },
   },
 });
 
@@ -102,5 +109,6 @@ export const {
   calculatePrice,
   initializeCart,
   setCartId,
+  setShipping, 
 } = cartSlice.actions;
 export default cartSlice.reducer;

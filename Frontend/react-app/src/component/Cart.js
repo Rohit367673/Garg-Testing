@@ -1,10 +1,12 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { useSelector, useDispatch } from "react-redux";
 import {
   calculatePrice,
   decrement,
   deleteCart,
   increment,
+  setShipping, // Assume you have an action to update shipping cost in Redux
 } from "../redux/CartSlice";
 import { useNavigate } from "react-router-dom";
 import { Box, Grid, Typography, Button, IconButton } from "@mui/material";
@@ -17,10 +19,37 @@ const Cart = () => {
   const { cartItems, subTotal, shipping, Total } = useSelector(
     (state) => state.cart
   );
+  const [destinationPincode, setDestinationPincode] = useState("");
 
   useEffect(() => {
     dispatch(calculatePrice());
   }, [cartItems, dispatch]);
+
+  // Example function to calculate shipping
+  const fetchShippingCost = async () => {
+    try {
+      // Example: Calculate total weight from cart items (adjust logic as needed)
+      const totalWeight = cartItems.reduce(
+        (acc, item) => acc + item.weight * item.quantity,
+        0
+      );
+      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/shiprocket/calculate-shipping`, {
+        weight: totalWeight,
+        destination_pincode: destinationPincode,
+      });
+      // Assuming response.data contains the shipping cost in a field, e.g., shipping_charge
+      dispatch(setShipping(response.data.data.shipping_charge));
+    } catch (error) {
+      console.error("Error fetching shipping cost:", error);
+    }
+  };
+
+  // Call fetchShippingCost when destination pincode or cart items change
+  useEffect(() => {
+    if (destinationPincode) {
+      fetchShippingCost();
+    }
+  }, [destinationPincode, cartItems]);
 
   const handleDelete = (id, selectedSize, selectedColor) => {
     dispatch(deleteCart({ id, selectedSize, selectedColor }));
@@ -61,6 +90,17 @@ const Cart = () => {
           Cart
         </Typography>
 
+        {/* Example input to capture pincode */}
+        <Box sx={{ textAlign: "center", mb: 3 }}>
+          <input
+            type="text"
+            placeholder="Enter Delivery Pincode"
+            value={destinationPincode}
+            onChange={(e) => setDestinationPincode(e.target.value)}
+          />
+          <Button onClick={fetchShippingCost}>Calculate Shipping</Button>
+        </Box>
+
         {cartItems.length === 0 ? (
           <Typography variant="h6" color="text.secondary" textAlign="center">
             Your cart is empty.
@@ -68,17 +108,21 @@ const Cart = () => {
         ) : (
           <Grid container spacing={3} justifyContent="center">
             {/* Product List Section */}
-            <Grid item xs={12} md={8}  sx={{
-      "@media (max-width: 768px)": {
-      flex: "0 0 100% !important",
-      maxWidth: "100% !important",
-    },
-  }}>
+            <Grid
+              item
+              xs={12}
+              md={8}
+              sx={{
+                "@media (max-width: 768px)": {
+                  flex: "0 0 100% !important",
+                  maxWidth: "100% !important",
+                },
+              }}
+            >
               {cartItems.map((item) => (
                 <Box
                   key={`${item.id}-${item.selectedSize}-${item.selectedColor}`}
                   sx={{
-                 
                     maxWidth: { xs: "90%", sm: "100%", md: "70%" },
                     margin: "0 auto",
                     backgroundColor: "white",
@@ -96,13 +140,12 @@ const Cart = () => {
                     },
                   }}
                 >
-                  {/* Reduced image width on small screens */}
                   <Box
                     component="img"
                     src={item.imgsrc}
                     alt={item.name}
                     sx={{
-                      width: { xs: 100, sm: 120 }, // Smaller image for mobile
+                      width: { xs: 100, sm: 120 },
                       height: "auto",
                       objectFit: "cover",
                       borderRadius: 2,
@@ -181,13 +224,17 @@ const Cart = () => {
             </Grid>
 
             {/* Summary Section */}
-            <Grid item xs={12} md={4}
-             sx={{
-              "@media (max-width: 768px)": {
-                flex: "0 0 100% !important",
-                maxWidth: "100% !important",
-              },
-            }}>
+            <Grid
+              item
+              xs={12}
+              md={4}
+              sx={{
+                "@media (max-width: 768px)": {
+                  flex: "0 0 100% !important",
+                  maxWidth: "100% !important",
+                },
+              }}
+            >
               <Box
                 sx={{
                   maxWidth: { xs: "90%", sm: "80%", md: "100%" },

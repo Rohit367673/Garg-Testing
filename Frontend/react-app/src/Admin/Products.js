@@ -14,7 +14,6 @@ import axios from "axios";
 const Products = () => {
   const [products, setProducts] = useState([]);
 
-
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -48,11 +47,10 @@ const Products = () => {
             <TableCell>Product Name</TableCell>
             <TableCell>Price</TableCell>
             <TableCell>Size</TableCell>
-
             <TableCell>Color</TableCell>
             <TableCell>Stock</TableCell>
-            <TableCell>Category</TableCell>
-
+            <TableCell>Catagory</TableCell>
+            <TableCell>Product Type</TableCell>
             <TableCell>Actions</TableCell>
           </TableRow>
         </TableHead>
@@ -61,25 +59,18 @@ const Products = () => {
             <TableRow key={product._id}>
               <TableCell>
                 {product.images && product.images[0] ? (
-               <img
-               src={product.images[0]}
-               alt={product.name}
-               width="50"
-               height="50"
-             />
-             
+                  <img src={product.images[0]} alt={product.name} width="50" height="50" />
                 ) : (
                   "No Image"
                 )}
               </TableCell>
               <TableCell>{product.name}</TableCell>
-
               <TableCell>{product.price}</TableCell>
               <TableCell>{product.size}</TableCell>
               <TableCell>{product.color}</TableCell>
               <TableCell>{product.stock}</TableCell>
-              <TableCell>{product.category}</TableCell>
-
+              <TableCell>{product.Catagory}</TableCell>
+              <TableCell>{product.productType}</TableCell>
               <TableCell>
                 <Button
                   variant="contained"

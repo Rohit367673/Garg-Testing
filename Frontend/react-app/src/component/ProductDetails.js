@@ -56,13 +56,13 @@ const ProductDetails = () => {
     fetchProduct();
   }, [productId]);
 
-  // Fetch related products
+  // Fetch related products using the correct field "Catagory"
   useEffect(() => {
     const fetchRelatedProducts = async () => {
-      if (product?.category) {
+      if (product?.Catagory) {
         try {
           const response = await axios.get(
-            `${process.env.REACT_APP_BACKEND_URL}/api/products?category=${product.category}`
+            `${process.env.REACT_APP_BACKEND_URL}/api/products?category=${product.Catagory}`
           );
           setRelatedProducts(response.data);
         } catch (error) {
@@ -103,7 +103,6 @@ const ProductDetails = () => {
       userId: user.id,
       productId: product._id,
       productName: product.name,
-      // Use the Cloudinary URL directly instead of a local path
       imgsrc: product.images?.[0] ? product.images[0] : "placeholder.jpg",
       price: product.price,
       quantity: 1,
@@ -210,7 +209,6 @@ const ProductDetails = () => {
       <Fade in timeout={500}>
         <Box
           component="img"
-          // Use the Cloudinary URL directly
           src={product?.images[currentImageIndex]}
           alt={product?.name}
           sx={{
@@ -244,7 +242,6 @@ const ProductDetails = () => {
           <Box
             key={idx}
             component="img"
-            // Use the Cloudinary URL directly instead of a local path
             src={img}
             alt={`Thumbnail ${idx}`}
             onClick={() => setCurrentImageIndex(idx)}
@@ -292,18 +289,10 @@ const ProductDetails = () => {
       </Typography>
 
       {/* Size Selection */}
-      {product?.size?.[0] && (
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-            mb: 2,
-            flexWrap: "wrap",
-          }}
-        >
+      {product?.size?.length > 0 && (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2, flexWrap: "wrap" }}>
           <Typography variant="subtitle1">Select Size:</Typography>
-          {product.size[0].split(",").map((size, index) => (
+          {product.size.map((size, index) => (
             <Button
               key={index}
               variant={selectedSize === size ? "contained" : "outlined"}
@@ -317,18 +306,10 @@ const ProductDetails = () => {
       )}
 
       {/* Color Selection */}
-      {product?.color?.[0] && (
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-            mb: 2,
-            flexWrap: "wrap",
-          }}
-        >
+      {product?.color?.length > 0 && (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2, flexWrap: "wrap" }}>
           <Typography variant="subtitle1">Select Color:</Typography>
-          {product.color[0].split(",").map((c, idx) => (
+          {product.color.map((c, idx) => (
             <Box
               key={idx}
               onClick={() => setSelectedColor(c.trim())}
@@ -337,10 +318,7 @@ const ProductDetails = () => {
                 height: 30,
                 borderRadius: "50%",
                 backgroundColor: c.trim(),
-                border:
-                  selectedColor === c.trim()
-                    ? "2px solid #007bff"
-                    : "1px solid #ccc",
+                border: selectedColor === c.trim() ? "2px solid #007bff" : "1px solid #ccc",
                 cursor: "pointer",
                 transition: "transform 0.2s",
                 "&:hover": { transform: "scale(1.1)" },
@@ -385,7 +363,6 @@ const ProductDetails = () => {
         {product && (
           <>
             {isDesktop ? (
-              // Desktop layout: two columns for slider and details
               <Grid container spacing={4}>
                 <Grid item xs={12} md={6}>
                   {renderSlider}
@@ -395,7 +372,6 @@ const ProductDetails = () => {
                 </Grid>
               </Grid>
             ) : (
-              // Mobile layout: slider on top, details below
               <>
                 {renderSlider}
                 {renderDetails}
@@ -437,7 +413,6 @@ const ProductDetails = () => {
                     >
                       <Box
                         component="img"
-                        // Use the Cloudinary URL directly
                         src={item.images?.[0] ? item.images[0] : "placeholder.jpg"}
                         alt={item.name}
                         sx={{
@@ -447,16 +422,10 @@ const ProductDetails = () => {
                           objectFit: "contain",
                         }}
                       />
-                      <Typography
-                        variant="body2"
-                        sx={{ mt: 1, textAlign: "center" }}
-                      >
+                      <Typography variant="body2" sx={{ mt: 1, textAlign: "center" }}>
                         {item.name}
                       </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{ textAlign: "center", color: "#333" }}
-                      >
+                      <Typography variant="body2" sx={{ textAlign: "center", color: "#333" }}>
                         ₹{item.price}
                       </Typography>
                       <Button
@@ -493,13 +462,7 @@ const ProductDetails = () => {
 
               {reviews.length > 0 ? (
                 reviews.map((rev) => (
-                  <Box
-                    key={rev._id}
-                    sx={{
-                      borderBottom: "1px solid #ddd",
-                      py: 1,
-                    }}
-                  >
+                  <Box key={rev._id} sx={{ borderBottom: "1px solid #ddd", py: 1 }}>
                     <Typography variant="subtitle2">
                       {rev.userId?.Name || "Anonymous"}
                     </Typography>
@@ -511,17 +474,11 @@ const ProductDetails = () => {
                   </Box>
                 ))
               ) : (
-                <Typography>
-                  No reviews yet. Be the first to review this product.
-                </Typography>
+                <Typography>No reviews yet. Be the first to review this product.</Typography>
               )}
 
               {user ? (
-                <Box
-                  component="form"
-                  onSubmit={handleReviewSubmit}
-                  sx={{ mt: 2 }}
-                >
+                <Box component="form" onSubmit={handleReviewSubmit} sx={{ mt: 2 }}>
                   <Typography variant="h6" sx={{ mb: 1 }}>
                     Leave a Review
                   </Typography>
@@ -545,9 +502,7 @@ const ProductDetails = () => {
                   </Button>
                 </Box>
               ) : (
-                <Typography sx={{ mt: 2 }}>
-                  Please log in to leave a review.
-                </Typography>
+                <Typography sx={{ mt: 2 }}>Please log in to leave a review.</Typography>
               )}
             </Box>
           </>
