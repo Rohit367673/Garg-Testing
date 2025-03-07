@@ -41,9 +41,13 @@ function Signup() {
         }
       })
       .catch((err) => {
-        console.error("Signup error:", err);
-        toast.error("Registration failed!");
+      
+        const errorMessage = err.response && err.response.data && err.response.data.message
+          ? err.response.data.message
+          : "Registration failed!";
+        toast.error(errorMessage);
       });
+      
   };
 
   const sendOtp = async () => {
@@ -126,41 +130,42 @@ function Signup() {
           />
         </div>
         <div className="input mb-4 flex items-center border-b border-gray-300">
-          <AiFillMail className="mr-2 text-gray-600" />
-          <input
-            type="email"
-            placeholder="Enter Email-Id"
-            required
-            value={Email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              // Reset OTP verification if email changes
-              setOtpSent(false);
-              setEmailVerified(false);
-            }}
-            className="flex-1 py-2 outline-none"
-          />
-          {!otpSent && (
-            <button type="button" onClick={sendOtp} className="ml-2 bg-blue-500 text-white px-3 py-1 rounded">
-              Send OTP
-            </button>
-          )}
-        </div>
-        {otpSent && !emailVerified && (
-          <div className="input mb-4 flex items-center border-b border-gray-300">
-            <input
-              type="text"
-              placeholder="Enter OTP"
-              required
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              className="flex-1 py-2 outline-none"
-            />
-            <button type="button" onClick={verifyOtp} className="ml-2 bg-green-500 text-white px-3 py-1 rounded">
-              Verify OTP
-            </button>
-          </div>
-        )}
+  <AiFillMail className="mr-2 text-gray-600" />
+  <input
+    type="email"
+    placeholder="Enter Email-Id"
+    required
+    value={Email}
+    onChange={(e) => {
+      setEmail(e.target.value);
+      // Reset OTP verification if email changes
+      setOtpSent(false);
+      setEmailVerified(false);
+    }}
+    className="flex-1 py-2 outline-none"
+  />
+  {!otpSent && (
+    <button type="button" onClick={sendOtp} className="ml-2 bg-blue-500 text-white px-3 py-1 rounded">
+      Send OTP
+    </button>
+  )}
+</div>
+{otpSent && !emailVerified && (
+  <div className="input mb-4 flex items-center border-b border-gray-300">
+    <input
+      type="text"
+      placeholder="Enter OTP"
+      required
+      value={otp}
+      onChange={(e) => setOtp(e.target.value)}
+      className="flex-1 py-2 outline-none"
+    />
+    <button type="button" onClick={verifyOtp} className="ml-2 bg-green-500 text-white px-3 py-1 rounded">
+      Verify OTP
+    </button>
+  </div>
+)}
+
         <div className="input mb-4 flex items-center border-b border-gray-300">
           <AiFillContacts className="mr-2 text-gray-600" />
           <input
