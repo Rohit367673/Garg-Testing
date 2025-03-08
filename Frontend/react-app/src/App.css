@@ -137,6 +137,9 @@
     flex-wrap: wrap;
     padding: 10px 20px;
   }
+  .cart-count{
+    right:25px;
+  }
 
   /* Hide the horizontal menu by default; show when toggled */
   .menu {
@@ -190,7 +193,9 @@
   .icon-user {
     font-size: 20px;
   }
-
+  .cart-count{
+    right:25px;
+  }
   .btnval .login-button,
   .btnval button {
     padding: 6px 15px;
