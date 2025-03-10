@@ -1,55 +1,53 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { useSelector, useDispatch } from "react-redux";
 import {
   calculatePrice,
   decrement,
   deleteCart,
   increment,
-  setShipping, // Assume you have an action to update shipping cost in Redux
 } from "../redux/CartSlice";
 import { useNavigate } from "react-router-dom";
-import { Box, Grid, Typography, Button, IconButton } from "@mui/material";
+import {
+  Box,
+  Grid,
+  Typography,
+  Button,
+  IconButton,
+  Card,
+  CardMedia,
+  CardContent,
+  Divider,
+} from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import Footer from "./Footer";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 const Cart = () => {
+  const [relatedProducts, setRelatedProducts] = useState([]);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { cartItems, subTotal, shipping, Total } = useSelector(
-    (state) => state.cart
-  );
-  const [destinationPincode, setDestinationPincode] = useState("");
+  const { cartItems, subTotal, Total } = useSelector((state) => state.cart);
 
   useEffect(() => {
     dispatch(calculatePrice());
   }, [cartItems, dispatch]);
 
-  // Example function to calculate shipping
-  const fetchShippingCost = async () => {
-    try {
-      // Example: Calculate total weight from cart items (adjust logic as needed)
-      const totalWeight = cartItems.reduce(
-        (acc, item) => acc + item.weight * item.quantity,
-        0
-      );
-      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/shiprocket/calculate-shipping`, {
-        weight: totalWeight,
-        destination_pincode: destinationPincode,
-      });
-      // Assuming response.data contains the shipping cost in a field, e.g., shipping_charge
-      dispatch(setShipping(response.data.data.shipping_charge));
-    } catch (error) {
-      console.error("Error fetching shipping cost:", error);
-    }
-  };
-
-  // Call fetchShippingCost when destination pincode or cart items change
+  // Fetch some products (not based on category)
   useEffect(() => {
-    if (destinationPincode) {
-      fetchShippingCost();
-    }
-  }, [destinationPincode, cartItems]);
+    const fetchRelatedProducts = async () => {
+      try {
+       
+        const response = await axios.get(
+          `${process.env.REACT_APP_BACKEND_URL}/api/products?limit=4`
+        );
+        setRelatedProducts(response.data);
+      } catch (error) {
+        console.error("Error fetching related products:", error.message);
+      }
+    };
+    fetchRelatedProducts();
+  }, []);
 
   const handleDelete = (id, selectedSize, selectedColor) => {
     dispatch(deleteCart({ id, selectedSize, selectedColor }));
@@ -67,8 +65,13 @@ const Cart = () => {
     if (cartItems.length > 0) {
       navigate("/checkout");
     } else {
-      alert("Your cart is empty!");
+      toast.error("Your cart is empty!");
     }
+  };
+
+  
+  const handleRelatedProductClick = (relatedProductId) => {
+    navigate(`/product/${relatedProductId}`);
   };
 
   return (
@@ -85,59 +88,31 @@ const Cart = () => {
           gutterBottom
           textAlign="center"
           color="text.primary"
-          sx={{ fontWeight: "bold" }}
+          sx={{ fontWeight: "bold", mb: 3 }}
         >
           Cart
         </Typography>
-
-        {/* Example input to capture pincode */}
-        <Box sx={{ textAlign: "center", mb: 3 }}>
-          <input
-            type="text"
-            placeholder="Enter Delivery Pincode"
-            value={destinationPincode}
-            onChange={(e) => setDestinationPincode(e.target.value)}
-          />
-          <Button onClick={fetchShippingCost}>Calculate Shipping</Button>
-        </Box>
 
         {cartItems.length === 0 ? (
           <Typography variant="h6" color="text.secondary" textAlign="center">
             Your cart is empty.
           </Typography>
         ) : (
-          <Grid container spacing={3} justifyContent="center">
-            {/* Product List Section */}
-            <Grid
-              item
-              xs={12}
-              md={8}
-              sx={{
-                "@media (max-width: 768px)": {
-                  flex: "0 0 100% !important",
-                  maxWidth: "100% !important",
-                },
-              }}
-            >
+          <Grid container spacing={3}>
+            {/* Cart Items Section */}
+            <Grid item xs={12} md={8}>
               {cartItems.map((item) => (
                 <Box
                   key={`${item.id}-${item.selectedSize}-${item.selectedColor}`}
                   sx={{
-                    maxWidth: { xs: "90%", sm: "100%", md: "70%" },
-                    margin: "0 auto",
-                    backgroundColor: "white",
-                    padding: 2,
-                    borderRadius: 2,
-                    boxShadow: 2,
-                    marginBottom: 3,
                     display: "flex",
                     flexDirection: { xs: "column", sm: "row" },
                     alignItems: "center",
-                    transition: "transform 0.2s, box-shadow 0.2s",
-                    "&:hover": {
-                      transform: "scale(1.02)",
-                      boxShadow: 4,
-                    },
+                    backgroundColor: "white",
+                    padding: 2,
+                    marginBottom: 2,
+                    borderRadius: 2,
+                    boxShadow: 2,
                   }}
                 >
                   <Box
@@ -147,13 +122,12 @@ const Cart = () => {
                     sx={{
                       width: { xs: 100, sm: 120 },
                       height: "auto",
-                      objectFit: "cover",
                       borderRadius: 2,
                       marginRight: { xs: 0, sm: 2 },
                       marginBottom: { xs: 2, sm: 0 },
+                      objectFit: "cover",
                     }}
                   />
-
                   <Box sx={{ flexGrow: 1 }}>
                     <Typography variant="h6" color="text.primary">
                       {item.productName}
@@ -167,7 +141,6 @@ const Cart = () => {
                     <Typography variant="body2" color="text.secondary">
                       Size: {item.selectedSize} | Color: {item.selectedColor}
                     </Typography>
-
                     <Box
                       sx={{
                         display: "flex",
@@ -204,15 +177,10 @@ const Cart = () => {
                         +
                       </Button>
                     </Box>
-
                     <IconButton
                       color="error"
                       onClick={() =>
-                        handleDelete(
-                          item.id,
-                          item.selectedSize,
-                          item.selectedColor
-                        )
+                        handleDelete(item.id, item.selectedSize, item.selectedColor)
                       }
                       sx={{ marginTop: 1 }}
                     >
@@ -224,49 +192,24 @@ const Cart = () => {
             </Grid>
 
             {/* Summary Section */}
-            <Grid
-              item
-              xs={12}
-              md={4}
-              sx={{
-                "@media (max-width: 768px)": {
-                  flex: "0 0 100% !important",
-                  maxWidth: "100% !important",
-                },
-              }}
-            >
+            <Grid item xs={12} md={4}>
               <Box
                 sx={{
-                  maxWidth: { xs: "90%", sm: "80%", md: "100%" },
-                  margin: "0 auto",
                   backgroundColor: "white",
                   padding: 3,
                   borderRadius: 2,
                   boxShadow: 2,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "flex-start",
+                  textAlign: "center",
                 }}
               >
-                <Typography
-                  variant="h6"
-                  color="text.primary"
-                  gutterBottom
-                  sx={{ fontWeight: "bold" }}
-                >
+                <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
                   Summary
                 </Typography>
                 <Typography variant="body1" color="text.primary">
                   Subtotal: ₹{subTotal}
                 </Typography>
-                <Typography variant="body1" color="text.primary">
-                  Shipping: ₹{shipping}
-                </Typography>
-                <Typography
-                  variant="h6"
-                  color="text.primary"
-                  sx={{ marginTop: 2 }}
-                >
+                <Divider sx={{ my: 2 }} />
+                <Typography variant="h6" color="text.primary">
                   Total: ₹{Total}
                 </Typography>
                 <Button
@@ -281,6 +224,74 @@ const Cart = () => {
             </Grid>
           </Grid>
         )}
+
+        {/* Discover Other Products Section */}
+    <Box sx={{ mt: 4 }}>
+                  <Typography variant="h5" sx={{ mb: 2 }}>
+                    Discover More Products
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      overflowX: "auto",
+                      gap: 2,
+                      py: 1,
+                    }}
+                  >
+                    {relatedProducts.length === 0 ? (
+                      <Typography>Loading related products...</Typography>
+                    ) : (
+                      relatedProducts.map((item) => (
+                        <Box
+                          key={item._id || item.id}
+                          sx={{
+                            flexShrink: 0,
+                            width: 200,
+                            p: 1,
+                            borderRadius: 2,
+                            boxShadow: 2,
+                            cursor: "pointer",
+                            transition: "transform 0.3s ease",
+                            "&:hover": { transform: "scale(1.05)" },
+                          }}
+                          onClick={() =>
+                            handleRelatedProductClick(item._id || item.id)
+                          }
+                        >
+                          <Box
+                            component="img"
+                            src={item.images?.[0] ? item.images[0] : "placeholder.jpg"}
+                            alt={item.name}
+                            sx={{
+                              width: "100%",
+                              height: 150,
+                              borderRadius: 1,
+                              objectFit: "contain",
+                            }}
+                          />
+                          <Typography variant="body2" sx={{ mt: 1, textAlign: "center" }}>
+                            {item.name}
+                          </Typography>
+                          <Typography variant="body2" sx={{ textAlign: "center", color: "#333" }}>
+                            ₹{item.price}
+                          </Typography>
+                          <Button
+                            variant="contained"
+                            sx={{
+                              width: "100%",
+                              mt: 1,
+                              backgroundColor: "#007bff",
+                              "&:hover": { backgroundColor: "#ff6347" },
+                            }}
+                          >
+                            Show Product
+                          </Button>
+                        </Box>
+                      ))
+                    )}
+                  </Box>
+                </Box>
+    
       </Box>
       <Footer />
     </>
