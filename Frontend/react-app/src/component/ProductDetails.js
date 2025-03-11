@@ -277,7 +277,7 @@ const ProductDetails = () => {
         {product?.name}
       </Typography>
       <Typography variant="h6" sx={{ color: "#007bff", mb: 1 }}>
-        ₹{product?.price}
+       Price:  ₹{product?.price}
       </Typography>
       <Divider sx={{ mb: 2 }} />
 
