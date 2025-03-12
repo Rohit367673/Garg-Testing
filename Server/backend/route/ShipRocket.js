@@ -91,20 +91,39 @@ router.post("/create-order", async (req, res) => {
   }
 });
 
-// Route to calculate shipping rates
 router.post("/calculate-shipping", async (req, res) => {
   try {
     const token = await getShiprocketToken();
-    const { weight, destination_pincode } = req.body;
+    const { destination_pincode, cartItems } = req.body;
+
+    if (!cartItems || !Array.isArray(cartItems)) {
+      return res.status(400).json({ error: "Cart items not provided or invalid" });
+    }
+
+    // Calculate total weight from cartItems (assuming weight is in grams)
+    let computedWeightInGrams = cartItems.reduce((sum, item) => {
+      const itemWeight = Number(item.weight) || 0;
+      const quantity = Number(item.quantity) || 1;
+      return sum + itemWeight * quantity;
+    }, 0);
+
+    // Convert grams to kg (if API expects kg) 
+    let computedWeightInKg = computedWeightInGrams / 1000;
+    // Fallback: if computedWeightInKg is 0, set to a default minimum (e.g., 1 kg)
+    const totalWeight = computedWeightInKg > 0 ? computedWeightInKg : 1;
+
     const payload = {
       pickup_postcode: process.env.PICKUP_PINCODE || "110001",
       delivery_postcode: destination_pincode,
-      cod: true,
-      weight: Number(weight),
+      cod: false, // for prepaid shipments
+      weight: totalWeight,
     };
 
+    console.log("Calculate Shipping Payload:", payload);
+
+    // Updated URL without trailing slash
     const response = await axios.post(
-      "https://apiv2.shiprocket.in/v1/external/courier/estimate/",
+      "https://apiv2.shiprocket.in/v1/external/courier/estimate",
       payload,
       {
         headers: {
@@ -116,9 +135,12 @@ router.post("/calculate-shipping", async (req, res) => {
 
     return res.status(200).json(response.data);
   } catch (error) {
-    console.error("Error calculating shipping:", error.response?.data || error.message);
+    console.error(
+      "Error calculating shipping:",
+      error.response ? error.response.data : error.message
+    );
     return res.status(500).json({
-      error: error.response?.data || error.message,
+      error: error.response ? error.response.data : error.message,
     });
   }
 });
