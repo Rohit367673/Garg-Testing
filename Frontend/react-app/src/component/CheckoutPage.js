@@ -1,9 +1,8 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "./AuthContext";
 import { initializeCart } from "../redux/CartSlice.js";
-import Footer from "./Footer.js";
 import toast from "react-hot-toast";
 import {
   Container,
@@ -13,7 +12,6 @@ import {
   TextField,
   Button,
   FormControl,
-  FormLabel,
   RadioGroup,
   FormControlLabel,
   Radio,
@@ -22,6 +20,7 @@ import {
   Grow,
   Fade,
 } from "@mui/material";
+import Footer from "./Footer.js";
 
 const CheckoutPage = () => {
   const { cartItems, Total, cartId } = useSelector((state) => state.cart);
@@ -29,7 +28,6 @@ const CheckoutPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // Initialize the cart if cartId is not set
   if (!cartId) {
     dispatch(initializeCart());
   }
@@ -51,15 +49,59 @@ const CheckoutPage = () => {
   const [otpSent, setOtpSent] = useState(false);
   const [phoneVerified, setPhoneVerified] = useState(false);
 
+  // Shipping and COD fee
+  const [shippingCost, setShippingCost] = useState(0);
+  const codFee = 50;
+
+  // Calculate total weight (in grams) for shipping calculation
+  const totalWeightGrams = cartItems.reduce((sum, item) => {
+    const itemWeight = item.weight ? Number(item.weight) : 500; // default
+    return sum + itemWeight * item.quantity;
+  }, 0);
+  const totalWeightKg = totalWeightGrams / 1000;
+
+  // Final total
+  const finalTotal = Total + shippingCost + (paymentMethod === "COD" ? codFee : 0);
+
+  // Fetch shipping cost when postal code or cart items change
+  useEffect(() => {
+    const fetchShippingCost = async () => {
+      if (address.postalCode?.length === 6 && cartItems.length > 0) {
+        try {
+          const response = await fetch(
+            `${process.env.REACT_APP_BACKEND_URL}/shiprocket/calculate-shipping`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                destination_pincode: address.postalCode,
+                weight: totalWeightKg,
+                cartItems,
+              }),
+            }
+          );
+          const data = await response.json();
+          if (data.estimated_shipping_cost) {
+            setShippingCost(data.estimated_shipping_cost);
+          } else {
+            setShippingCost(0);
+          }
+        } catch (error) {
+          console.error("Error fetching shipping cost:", error);
+          setShippingCost(0);
+        }
+      }
+    };
+    fetchShippingCost();
+  }, [address.postalCode, cartItems, totalWeightKg]);
+
+  // Handle changes in address fields
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setAddress((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setAddress((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Function to send OTP
+  // OTP: send & verify
   const handleSendOTP = async () => {
     if (!address.phone) {
       toast.error("Please enter a phone number.");
@@ -87,7 +129,6 @@ const CheckoutPage = () => {
     }
   };
 
-  // Function to verify OTP
   const handleVerifyOTP = async () => {
     if (!otp) {
       toast.error("Please enter the OTP.");
@@ -115,7 +156,7 @@ const CheckoutPage = () => {
     }
   };
 
-  // Function to call backend ShipRocket endpoint after order creation
+  // Create shipping order after placing
   const initiateShippingOrder = async (orderDetails, method) => {
     try {
       const shippingResponse = await fetch(
@@ -141,7 +182,7 @@ const CheckoutPage = () => {
     }
   };
 
-  // COD Flow
+  // COD Payment
   const handleCODPayment = async () => {
     if (!user) {
       alert("User is not logged in!");
@@ -156,36 +197,31 @@ const CheckoutPage = () => {
       toast.error("Phone number must be exactly 10 digits!");
       return;
     }
-    const userId = user.id;
-    const adjustedCartItems = cartItems.map((item) => ({
-      productId: item.productId,
-      productName: item.productName,
-      imgsrc: item.imgsrc,
-      price: item.price,
-      selectedSize: item.selectedSize,
-      selectedColor: item.selectedColor,
-      quantity: item.quantity,
-    }));
+
     try {
-      const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/create-order`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId,
-            cartId,
-            cartItems: adjustedCartItems,
-            totalAmount: Total,
-            paymentMethod: "COD",
-            addressInfo: { ...address },
-          }),
-        }
-      );
+      const userId = user.id;
+      const adjustedCartItems = cartItems.map((item) => ({
+        ...item,
+        weight: item.weight || 500,
+      }));
+
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/create-order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          cartId,
+          cartItems: adjustedCartItems,
+          totalAmount: Total,
+          paymentMethod: "COD",
+          addressInfo: { ...address },
+        }),
+      });
       const orderData = await response.json();
       if (!orderData.dbOrderId) {
         throw new Error("COD order creation failed");
       }
+
       await initiateShippingOrder(
         {
           cartItems: adjustedCartItems,
@@ -195,16 +231,14 @@ const CheckoutPage = () => {
         },
         "COD"
       );
-      toast.success(
-        "COD order placed! Payment will be collected on delivery."
-      );
+      toast.success("COD order placed! Payment will be collected on delivery.");
     } catch (error) {
       alert("Error creating COD order. Please try again.");
       console.error(error);
     }
   };
 
-  // Online Payment Flow with Razorpay
+  // Online Payment
   const handleOnlinePayment = async () => {
     if (!user) {
       alert("User is not logged in!");
@@ -219,36 +253,31 @@ const CheckoutPage = () => {
       toast.error("Phone number must be exactly 10 digits!");
       return;
     }
-    const userId = user.id;
-    const adjustedCartItems = cartItems.map((item) => ({
-      productId: item.productId,
-      productName: item.productName,
-      imgsrc: item.imgsrc,
-      price: item.price,
-      selectedSize: item.selectedSize,
-      selectedColor: item.selectedColor,
-      quantity: item.quantity,
-    }));
+
     try {
-      const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/create-order`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId,
-            cartId,
-            cartItems: adjustedCartItems,
-            totalAmount: Total,
-            paymentMethod: "Razorpay",
-            addressInfo: { ...address },
-          }),
-        }
-      );
+      const userId = user.id;
+      const adjustedCartItems = cartItems.map((item) => ({
+        ...item,
+        weight: item.weight || 500,
+      }));
+
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/create-order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          cartId,
+          cartItems: adjustedCartItems,
+          totalAmount: Total,
+          paymentMethod: "Razorpay",
+          addressInfo: { ...address },
+        }),
+      });
       const orderData = await response.json();
       if (!orderData.orderId) {
         throw new Error("Order creation failed");
       }
+
       const options = {
         key: process.env.REACT_APP_RAZORPAY_KEY,
         amount: orderData.amount, // in paise
@@ -282,7 +311,7 @@ const CheckoutPage = () => {
     }
   };
 
-  // Main form submission (decides payment method)
+  // Form submission
   const handleSubmit = (e) => {
     e.preventDefault();
     if (paymentMethod === "COD") {
@@ -293,127 +322,126 @@ const CheckoutPage = () => {
   };
 
   return (
+    <>
     <Grow in timeout={800}>
-      <Container maxWidth="sm" sx={{ mt: 4, mb: 4 }}>
+      <Container maxWidth="lg" sx={{ my: 4 }}>
         <Paper
-          elevation={6}
+          elevation={8}
           sx={{
-            p: 4,
+            p: { xs: 2, md: 4 },
             borderRadius: 3,
             background:
-              "linear-gradient(135deg, rgba(255,255,255,0.9), rgba(240,240,240,0.9))",
+              "linear-gradient(135deg, rgba(255,255,255,0.95), rgba(240,240,240,0.95))",
           }}
         >
           <Fade in timeout={1000}>
-            <Typography variant="h4" align="center" gutterBottom sx={{ fontWeight: 600 }}>
+            <Typography variant="h4" align="center" gutterBottom sx={{ fontWeight: 700, mb: 3 }}>
               Checkout
             </Typography>
           </Fade>
-          {cartItems.length === 0 ? (
-            <Typography variant="body1" align="center">
-              Your cart is empty. Please add items first.
-            </Typography>
-          ) : (
-            <form onSubmit={handleSubmit}>
-              <Grid container spacing={2}>
-                {/* Delivery Information */}
-                <Grid item xs={12}>
-                  <Typography variant="h6" sx={{ fontWeight: 500, mb: 1 }}>
+
+          {/** 
+           *  Use two columns on md (desktop) and above, 
+           *  single column on xs/sm (mobile).
+           */}
+          <Grid container spacing={4}>
+            {/* LEFT COLUMN: Delivery Info, OTP, Payment */}
+            <Grid item xs={12} md={8}>
+              <form onSubmit={handleSubmit}>
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
                     Delivery Information
                   </Typography>
-                </Grid>
-                {[
-                  { label: "Name", name: "name" },
-                  { label: "Email", name: "email" },
-                  { label: "Phone", name: "phone" },
-                  { label: "Street", name: "street" },
-                  { label: "City", name: "city" },
-                  { label: "Postal Code", name: "postalCode" },
-                  { label: "State", name: "state" },
-                ].map((field) => (
-                  <Grid item xs={12} key={field.name}>
-                    <TextField
-                      fullWidth
-                      label={field.label}
-                      name={field.name}
-                      value={address[field.name]}
-                      onChange={handleChange}
-                      required
-                      variant="outlined"
-                      sx={{ backgroundColor: "#fff", borderRadius: 1 }}
-                    />
+                  <Grid container spacing={2}>
+                    {[
+                      { label: "Name", name: "name" },
+                      { label: "Email", name: "email" },
+                      { label: "Phone", name: "phone" },
+                      { label: "Street", name: "street" },
+                      { label: "City", name: "city" },
+                      { label: "Postal Code", name: "postalCode" },
+                      { label: "State", name: "state" },
+                    ].map((field) => (
+                      <Grid item xs={12} md={6} key={field.name}>
+                        <TextField
+                          fullWidth
+                          label={field.label}
+                          name={field.name}
+                          value={address[field.name]}
+                          onChange={handleChange}
+                          required
+                          variant="outlined"
+                          sx={{ backgroundColor: "#fff", borderRadius: 1 }}
+                        />
+                      </Grid>
+                    ))}
                   </Grid>
-                ))}
+                </Box>
 
-                {/* OTP Section */}
-                <Grid item xs={12}>
-                  {!otpSent ? (
-                    <Button
-                      variant="contained"
-                      color="secondary"
-                      onClick={handleSendOTP}
-                      fullWidth
-                      sx={{ py: 1.5, fontWeight: "bold" }}
-                    >
-                      Send OTP
-                    </Button>
-                  ) : (
-                    <>
-                      <TextField
-                        fullWidth
-                        label="Enter OTP"
-                        value={otp}
-                        onChange={(e) => setOtp(e.target.value)}
-                        variant="outlined"
-                        sx={{ mb: 1, backgroundColor: "#fff", borderRadius: 1 }}
-                      />
-                      <Button
-                        variant="contained"
-                        color="secondary"
-                        onClick={handleVerifyOTP}
-                        fullWidth
-                        sx={{ py: 1.5, fontWeight: "bold" }}
-                      >
-                        Verify OTP
-                      </Button>
-                    </>
-                  )}
-                </Grid>
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
+                    OTP Verification
+                  </Typography>
+                  <Grid container spacing={2}>
+                    {!otpSent ? (
+                      <Grid item xs={12}>
+                        <Button
+                          variant="contained"
+                          color="secondary"
+                          onClick={handleSendOTP}
+                          fullWidth
+                          sx={{ py: 1.5, fontWeight: "bold" }}
+                        >
+                          Send OTP
+                        </Button>
+                      </Grid>
+                    ) : (
+                      <>
+                        <Grid item xs={8}>
+                          <TextField
+                            fullWidth
+                            label="Enter OTP"
+                            value={otp}
+                            onChange={(e) => setOtp(e.target.value)}
+                            variant="outlined"
+                            sx={{ backgroundColor: "#fff", borderRadius: 1 }}
+                          />
+                        </Grid>
+                        <Grid item xs={4}>
+                          <Button
+                            variant="contained"
+                            color="secondary"
+                            onClick={handleVerifyOTP}
+                            fullWidth
+                            sx={{ py: 1.5, fontWeight: "bold" }}
+                          >
+                            Verify
+                          </Button>
+                        </Grid>
+                      </>
+                    )}
+                  </Grid>
+                </Box>
 
-                {/* Payment Method */}
-                <Grid item xs={12}>
-                  <FormControl component="fieldset" fullWidth>
-                    <FormLabel component="legend" sx={{ mb: 1 }}>
-                      Payment Method
-                    </FormLabel>
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
+                    Payment Method
+                  </Typography>
+                  <FormControl component="fieldset">
                     <RadioGroup
                       row
                       value={paymentMethod}
                       onChange={(e) => setPaymentMethod(e.target.value)}
                     >
-                      <FormControlLabel
-                        value="ONLINE"
-                        control={<Radio />}
-                        label="Online Payment"
-                      />
-                      <FormControlLabel
-                        value="COD"
-                        control={<Radio />}
-                        label="Cash on Delivery"
-                      />
+                      <FormControlLabel value="ONLINE" control={<Radio />} label="Online Payment" />
+                      <FormControlLabel value="COD" control={<Radio />} label="Cash on Delivery" />
                     </RadioGroup>
                   </FormControl>
-                </Grid>
+                </Box>
 
-                <Grid item xs={12}>
-                  <Divider sx={{ my: 2 }} />
-                  <Typography variant="h6" sx={{ fontWeight: 500 }}>
-                    Order Summary
-                  </Typography>
-                  <Typography variant="body1">Total: ₹{Total}</Typography>
-                </Grid>
-
-                <Grid item xs={12}>
+                {/* PLACE ORDER BUTTON (visible only on mobile if you want 
+                    the user to see it after summary on desktop) */}
+                <Box sx={{ display: { xs: "block", md: "none" }, mt: 2 }}>
                   <Button
                     type="submit"
                     variant="contained"
@@ -421,17 +449,81 @@ const CheckoutPage = () => {
                     fullWidth
                     size="large"
                     disabled={!phoneVerified}
-                    sx={{ py: 1.8, fontWeight: "bold", mt: 1 }}
+                    sx={{ py: 1.8, fontWeight: "bold" }}
                   >
                     Place Order
                   </Button>
+                </Box>
+              </form>
+            </Grid>
+
+            {/* RIGHT COLUMN: Order Summary */}
+            <Grid item xs={12} md={4}>
+              <Paper elevation={4} sx={{ p: 3, borderRadius: 2, backgroundColor: "#f9f9f9" }}>
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
+                  Order Summary
+                </Typography>
+                <Grid container spacing={1}>
+                  <Grid item xs={6}>
+                    <Typography variant="body1">Subtotal:</Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="body1" align="right">
+                      ₹{Total}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="body1">Shipping:</Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="body1" align="right">
+                      ₹{shippingCost}
+                    </Typography>
+                  </Grid>
+                  {paymentMethod === "COD" && (
+                    <>
+                      <Grid item xs={6}>
+                        <Typography variant="body1">COD Fee:</Typography>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Typography variant="body1" align="right">
+                          ₹{codFee}
+                        </Typography>
+                      </Grid>
+                    </>
+                  )}
                 </Grid>
-              </Grid>
-            </form>
-          )}
+                <Divider sx={{ my: 2 }} />
+                <Typography variant="h6" align="right">
+                  Total: ₹{finalTotal}
+                </Typography>
+              </Paper>
+
+              {/* Place Order Button for DESKTOP (hidden on mobile) */}
+              <Box sx={{ display: { xs: "none", md: "block" }, mt: 3 }}>
+                <Button
+                  type="submit"
+                  form="root-form" // or handle differently
+                  variant="contained"
+                  color="primary"
+                  fullWidth
+                  size="large"
+                  disabled={!phoneVerified}
+                  sx={{ py: 1.8, fontWeight: "bold" }}
+                  onClick={handleSubmit}
+                >
+                  Place Order
+                </Button>
+              </Box>
+            </Grid>
+          </Grid>
+
+        
         </Paper>
       </Container>
     </Grow>
+    <Footer/>
+    </>
   );
 };
 
