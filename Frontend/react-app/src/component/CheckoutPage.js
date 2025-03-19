@@ -219,7 +219,7 @@ const CheckoutPage = () => {
             <h2 className="mt-4">OTP Verification</h2>
             <div className="input-container">
               {!otpSent ? (
-                <button type="button" onClick={handleSendOTP} className="btn">
+                <button type="button" onClick={handleSendOTP} className="btnC">
                   SEND OTP
                 </button>
               ) : (
@@ -230,7 +230,7 @@ const CheckoutPage = () => {
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
                   />
-                  <button type="button" onClick={handleVerifyOTP} className="btn">
+                  <button type="button" onClick={handleVerifyOTP} className="btnC">
                     Verify
                   </button>
                 </>
