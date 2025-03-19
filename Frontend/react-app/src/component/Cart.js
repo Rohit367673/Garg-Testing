@@ -13,9 +13,6 @@ import {
   Typography,
   Button,
   IconButton,
-  Card,
-  CardMedia,
-  CardContent,
   Divider,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -37,7 +34,6 @@ const Cart = () => {
   useEffect(() => {
     const fetchRelatedProducts = async () => {
       try {
-       
         const response = await axios.get(
           `${process.env.REACT_APP_BACKEND_URL}/api/products?limit=4`
         );
@@ -57,8 +53,19 @@ const Cart = () => {
     dispatch(decrement({ id, selectedSize, selectedColor }));
   };
 
+  // Updated handleIncrement function to check current quantity
   const handleIncrement = (id, selectedSize, selectedColor) => {
-    dispatch(increment({ id, selectedSize, selectedColor }));
+    const item = cartItems.find(
+      (item) =>
+        item.id === id &&
+        item.selectedSize === selectedSize &&
+        item.selectedColor === selectedColor
+    );
+    if (item && item.quantity < 2) {
+      dispatch(increment({ id, selectedSize, selectedColor }));
+    } else {
+      toast.error("Maximum quantity reached!");
+    }
   };
 
   const handleCheckout = () => {
@@ -69,7 +76,6 @@ const Cart = () => {
     }
   };
 
-  
   const handleRelatedProductClick = (relatedProductId) => {
     navigate(`/product/${relatedProductId}`);
   };
@@ -173,6 +179,7 @@ const Cart = () => {
                             item.selectedColor
                           )
                         }
+                        disabled={item.quantity >= 2}
                       >
                         +
                       </Button>
@@ -226,72 +233,81 @@ const Cart = () => {
         )}
 
         {/* Discover Other Products Section */}
-    <Box sx={{ mt: 4 }}>
-                  <Typography variant="h5" sx={{ mb: 2 }}>
-                    Discover More Products
-                  </Typography>
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h5" sx={{ mb: 2 }}>
+            Discover More Products
+          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              overflowX: "auto",
+              gap: 2,
+              py: 1,
+            }}
+          >
+            {relatedProducts.length === 0 ? (
+              <Typography>Loading related products...</Typography>
+            ) : (
+              relatedProducts.map((item) => (
+                <Box
+                  key={item._id || item.id}
+                  sx={{
+                    flexShrink: 0,
+                    width: 200,
+                    p: 1,
+                    borderRadius: 2,
+                    boxShadow: 2,
+                    cursor: "pointer",
+                    transition: "transform 0.3s ease",
+                    "&:hover": { transform: "scale(1.05)" },
+                  }}
+                  onClick={() =>
+                    handleRelatedProductClick(item._id || item.id)
+                  }
+                >
                   <Box
+                    component="img"
+                    src={
+                      item.images?.[0]
+                        ? item.images[0]
+                        : "placeholder.jpg"
+                    }
+                    alt={item.name}
                     sx={{
-                      display: "flex",
-                      overflowX: "auto",
-                      gap: 2,
-                      py: 1,
+                      width: "100%",
+                      height: 150,
+                      borderRadius: 1,
+                      objectFit: "contain",
+                    }}
+                  />
+                  <Typography
+                    variant="body2"
+                    sx={{ mt: 1, textAlign: "center" }}
+                  >
+                    {item.name}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ textAlign: "center", color: "#333" }}
+                  >
+                    ₹{item.price}
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    sx={{
+                      width: "100%",
+                      mt: 1,
+                      backgroundColor: "#007bff",
+                      "&:hover": { backgroundColor: "#ff6347" },
                     }}
                   >
-                    {relatedProducts.length === 0 ? (
-                      <Typography>Loading related products...</Typography>
-                    ) : (
-                      relatedProducts.map((item) => (
-                        <Box
-                          key={item._id || item.id}
-                          sx={{
-                            flexShrink: 0,
-                            width: 200,
-                            p: 1,
-                            borderRadius: 2,
-                            boxShadow: 2,
-                            cursor: "pointer",
-                            transition: "transform 0.3s ease",
-                            "&:hover": { transform: "scale(1.05)" },
-                          }}
-                          onClick={() =>
-                            handleRelatedProductClick(item._id || item.id)
-                          }
-                        >
-                          <Box
-                            component="img"
-                            src={item.images?.[0] ? item.images[0] : "placeholder.jpg"}
-                            alt={item.name}
-                            sx={{
-                              width: "100%",
-                              height: 150,
-                              borderRadius: 1,
-                              objectFit: "contain",
-                            }}
-                          />
-                          <Typography variant="body2" sx={{ mt: 1, textAlign: "center" }}>
-                            {item.name}
-                          </Typography>
-                          <Typography variant="body2" sx={{ textAlign: "center", color: "#333" }}>
-                            ₹{item.price}
-                          </Typography>
-                          <Button
-                            variant="contained"
-                            sx={{
-                              width: "100%",
-                              mt: 1,
-                              backgroundColor: "#007bff",
-                              "&:hover": { backgroundColor: "#ff6347" },
-                            }}
-                          >
-                            Show Product
-                          </Button>
-                        </Box>
-                      ))
-                    )}
-                  </Box>
+                    Show Product
+                  </Button>
                 </Box>
-    
+              ))
+            )}
+          </Box>
+        </Box>
       </Box>
       <Footer />
     </>
