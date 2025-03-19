@@ -81,7 +81,7 @@
 }
 
 /* Button styling */
-.btn {
+.btnC {
   width: 100%;
   padding: 12px;
   background-color: #9C27B0;
@@ -94,7 +94,7 @@
   transition: background-color 0.3s;
 }
 
-.btn:hover {
+.btnC:hover {
   background-color: #7B1FA2;
 }
 
