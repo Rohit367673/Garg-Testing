@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, Navigate, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { addToCart, calculatePrice } from "../redux/CartSlice";
 import axios from "axios";
@@ -22,6 +22,7 @@ import Footer from "./Footer";
 import toast from "react-hot-toast";
 import { AuthContext } from "./AuthContext";
 
+
 const ProductDetails = () => {
   const { productId } = useParams();
   const { user } = useContext(AuthContext);
@@ -40,6 +41,7 @@ const ProductDetails = () => {
 
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
+  const navigate= useNavigate();
 
   // Fetch product details
   useEffect(() => {
@@ -93,6 +95,7 @@ const ProductDetails = () => {
   const addToCartHandler = async () => {
     if (!user) {
       toast.error("Please log in to add products to your cart.");
+      navigate("/Login");
       return;
     }
     if (!selectedSize || !selectedColor) {
@@ -277,7 +280,7 @@ const ProductDetails = () => {
         {product?.name}
       </Typography>
       <Typography variant="h6" sx={{ color: "#007bff", mb: 1 }}>
-       Price:  ₹{product?.price}
+        ₹{product?.price}
       </Typography>
       <Divider sx={{ mb: 2 }} />
 
