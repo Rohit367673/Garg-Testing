@@ -20,7 +20,7 @@ import dotenv from "dotenv";
 import crypto from "crypto";
 import admin from "firebase-admin";
 import ReviewsModel from "./Models/Reviews.js";
-import ShipRocket from "./route/ShipRocket.js"
+import OrderHistoryRoute from "./route/OrderHistoryRoute.js"
 import TwilioRoute from "./route/TwilioRoute.js"
 import twilioOtpRouter from "./route/TwilioOtp.js"
 import EmailOtp from "./route/EmailOtp.js"
@@ -55,7 +55,7 @@ app.use(
 
 app.use("/api", productRoutes);
 app.use("/api", sliderRoute);
-app.use("/shiprocket",ShipRocket)
+app.use("/api",OrderHistoryRoute)
 app.use("/api/whatsapp",TwilioRoute)
 app.use("/api/otp", twilioOtpRouter);
 app.use("/api/otp",EmailOtp)
@@ -203,12 +203,31 @@ app.get("/user-orders/:userId", async (req, res) => {
 app.put('/orders/:id', async (req, res) => {
   try {
     const order = await OrderModel.findById(req.params.id);
-    if (!order)
+    if (!order) {
       return res.status(404).json({ message: 'Order not found' });
-    
+    }
 
+    // Capture previous status to ensure we update quantity only once
+    const prevStatus = order.orderStatus;
+    
+    // Update the order status from the request body (e.g., 'approved')
     order.orderStatus = req.body.orderStatus || order.orderStatus;
     await order.save();
+
+    // If order is being approved now (and wasn't already approved)
+    if (
+      order.orderStatus.toLowerCase() === 'approved' &&
+      prevStatus.toLowerCase() !== 'approved'
+    ) {
+      // Loop through each cart item in the order and update product quantity
+      for (const item of order.cartItems) {
+        // Atomically subtract the order quantity from the product's stock quantity
+        await ProductModel.findByIdAndUpdate(
+          item.productId,
+          { $inc: { quantity: -item.quantity } }
+        );
+      }
+    }
     
     res.json({
       message: 'Order updated successfully',
@@ -216,7 +235,7 @@ app.put('/orders/:id', async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating order:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 

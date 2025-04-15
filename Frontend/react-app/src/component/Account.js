@@ -16,7 +16,7 @@ function Account() {
     Name: user?.Name || userData?.Name || "",
     Email: user?.Email || userData?.Email || "",
     birthday: "Birthday",
-    phone: user?.phone || userData?.phone || "",
+    Number: user?.Number || userData?.Number || "",
     id: user?.id || userData?.id || "",
     photo: user?.photo || userData?.photo || "",
   });
@@ -29,7 +29,7 @@ function Account() {
         ...prevValues,
         Name: userData.Name || prevValues.Name,
         Email: userData.Email || prevValues.Email,
-        phone: userData.phone || prevValues.phone,
+        Number: userData.Number || prevValues.Number,
         id: userData.id || prevValues.id,
         photo: userData.ProfilePic || prevValues.ProfilePic,
       }));
@@ -180,11 +180,11 @@ function Account() {
                     placeholder="Enter Phone"
                     type="text"
                     name="phone"
-                    value={formValues.phone}
+                    value={formValues.Number}
                     onChange={handleChange}
                   />
                 ) : (
-                  <span>{formValues.phone}</span>
+                  <span>{formValues.Number}</span>
                 )}
               </div>
 

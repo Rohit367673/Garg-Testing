@@ -19,7 +19,7 @@ const Products = () => {
       try {
         const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products`);
         console.log(response.data);
-        setProducts(response.data);
+        setProducts(response.data.products);
       } catch (error) {
         console.error("Error fetching products:", error);
       }
@@ -50,7 +50,6 @@ const Products = () => {
             <TableCell>Color</TableCell>
             <TableCell>Stock</TableCell>
             <TableCell>Catagory</TableCell>
-            <TableCell>Product Type</TableCell>
             <TableCell>Actions</TableCell>
           </TableRow>
         </TableHead>
@@ -70,7 +69,7 @@ const Products = () => {
               <TableCell>{product.color}</TableCell>
               <TableCell>{product.stock}</TableCell>
               <TableCell>{product.Catagory}</TableCell>
-              <TableCell>{product.productType}</TableCell>
+              
               <TableCell>
                 <Button
                   variant="contained"

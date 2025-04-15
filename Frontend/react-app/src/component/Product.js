@@ -13,46 +13,59 @@ import {
   MenuItem, 
   FormControl, 
   InputLabel,
-  CircularProgress,
-  Box
+  CircularProgress
 } from "@mui/material";
 import "./Product.css";
 import Footer from "./Footer";
 
 const Product = () => {
   const [products, setProducts] = useState([]);
-  const [visibleProducts, setVisibleProducts] = useState(8);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [category, setCategory] = useState("all");
   const [sort, setSort] = useState("default");
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    axios
-      .get(`${process.env.REACT_APP_BACKEND_URL}/api/products`)
-      .then((response) => {
-        setProducts(response.data);
-        setIsLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error fetching products:", error);
-        setIsLoading(false);
+  // Function to fetch products based on current page and selected category
+  const fetchProducts = async (page, selectedCategory) => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products`, {
+        params: {
+          page,
+          limit: 20, 
+          category: selectedCategory === "all" ? "All" : selectedCategory,
+        },
       });
-  }, []);
+      // If we're on the first page, replace products; otherwise, append them.
+      if (page === 1) {
+        setProducts(response.data.products);
+      } else {
+        setProducts((prevProducts) => [...prevProducts, ...response.data.products]);
+      }
+      setCurrentPage(response.data.currentPage);
+      setTotalPages(response.data.totalPages);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  // Filter products based on Category
-  // Using the 'Catagory' field (adjust if needed)
-  const filteredProducts = products.filter((product) =>
-    category === "all" || product.Catagory === category
-  );
+  // Fetch products on initial render and when category changes
+  useEffect(() => {
+    fetchProducts(1, category);
+  }, [category]);
 
-  // Sort products
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    if (sort === "price-low") return a.price - b.price;
-    if (sort === "price-high") return b.price - a.price;
-    return 0;
-  });
+  // Function to load more products
+  const loadMore = () => {
+    if (currentPage < totalPages) {
+      fetchProducts(currentPage + 1, category);
+    }
+  };
 
+  // Function for handling the "Buy Now" button
   const handleBuyClick = (product) => {
     if (product && product._id) {
       navigate(`/product/${product._id}`);
@@ -60,6 +73,13 @@ const Product = () => {
       console.error("Product ID is not valid:", product);
     }
   };
+
+  // Sorting the products if needed
+  const sortedProducts = [...products].sort((a, b) => {
+    if (sort === "price-low") return a.price - b.price;
+    if (sort === "price-high") return b.price - a.price;
+    return 0;
+  });
 
   return (
     <>
@@ -100,19 +120,14 @@ const Product = () => {
 
         {/* Loading Spinner */}
         {isLoading ? (
-          <Grid 
-            container 
-            justifyContent="center" 
-            alignItems="center" 
-            sx={{ minHeight: "80vh" }}
-          >
+          <Grid container justifyContent="center" alignItems="center" sx={{ minHeight: "80vh" }}>
             <CircularProgress />
           </Grid>
         ) : (
           <>
             {/* Product List */}
             <Grid container spacing={2}>
-              {sortedProducts.slice(0, visibleProducts).map((product, index) => (
+              {sortedProducts.map((product, index) => (
                 <Grid 
                   item 
                   key={index} 
@@ -155,12 +170,9 @@ const Product = () => {
             </Grid>
 
             {/* Load More Button */}
-            {visibleProducts < sortedProducts.length && (
+            {currentPage < totalPages && (
               <Grid container justifyContent="center" sx={{ marginTop: 3 }}>
-                <Button 
-                  variant="outlined" 
-                  onClick={() => setVisibleProducts(visibleProducts + 8)}
-                >
+                <Button variant="outlined" onClick={loadMore}>
                   Load More
                 </Button>
               </Grid>

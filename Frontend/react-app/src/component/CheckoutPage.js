@@ -3,25 +3,8 @@ import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "./AuthContext";
 import { initializeCart } from "../redux/CartSlice.js";
-import Footer from "./Footer.js";
 import toast from "react-hot-toast";
-import {
-  Container,
-  Paper,
-  Typography,
-  Grid,
-  TextField,
-  Button,
-  FormControl,
-  FormLabel,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
-  Divider,
-  Box,
-  Grow,
-  Fade,
-} from "@mui/material";
+import "./CheckoutPage.css";
 
 const CheckoutPage = () => {
   const { cartItems, Total, cartId } = useSelector((state) => state.cart);
@@ -29,11 +12,12 @@ const CheckoutPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // Initialize the cart if cartId is not set
+  // Ensure cartId is initialized
   if (!cartId) {
     dispatch(initializeCart());
   }
 
+  // Address state
   const [address, setAddress] = useState({
     name: "",
     email: "",
@@ -44,22 +28,25 @@ const CheckoutPage = () => {
     state: "",
   });
 
+  // Payment & OTP
   const [paymentMethod, setPaymentMethod] = useState("ONLINE");
-
-  // OTP-related state
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [phoneVerified, setPhoneVerified] = useState(false);
 
+  const codFee = 50; // COD fee if applicable
+  const finalTotal = Total + (paymentMethod === "COD" ? codFee : 0);
+
+  // Razorpay Key (should be set in your .env file)
+  const RAZORPAY_KEY = process.env.REACT_APP_RAZORPAY_KEY;
+
+  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setAddress((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setAddress((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Function to send OTP
+  // OTP Send
   const handleSendOTP = async () => {
     if (!address.phone) {
       toast.error("Please enter a phone number.");
@@ -87,7 +74,7 @@ const CheckoutPage = () => {
     }
   };
 
-  // Function to verify OTP
+  // OTP Verify
   const handleVerifyOTP = async () => {
     if (!otp) {
       toast.error("Please enter the OTP.");
@@ -115,33 +102,52 @@ const CheckoutPage = () => {
     }
   };
 
-  // Function to call backend ShipRocket endpoint after order creation
-  const initiateShippingOrder = async (orderDetails, method) => {
-    try {
-      const shippingResponse = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/shiprocket/create-order`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            cartItems: orderDetails.cartItems,
-            addressInfo: orderDetails.addressInfo,
-            totalAmount: orderDetails.totalAmount,
-            orderId: orderDetails.orderId,
-            paymentMethod: method,
-          }),
-        }
-      );
-      const shippingData = await shippingResponse.json();
-      console.log("Shipping order created:", shippingData);
-      toast.success("Shipping order created successfully!");
-    } catch (error) {
-      console.error("Error creating shipping order:", error);
-      toast.error("Error creating shipping order");
-    }
+  // Create Order API function
+  const createOrder = async (paymentMethodType) => {
+    const userId = user.id;
+
+    // Adjust cart items format as needed by your backend API
+    const adjustedCartItems = cartItems.map((item) => ({
+      productId: item.productId,
+      productName: item.productName,
+      imgsrc: item.imgsrc,
+      price: item.price,
+      selectedSize: item.selectedSize,
+      selectedColor: item.selectedColor,
+      quantity: item.quantity,
+    }));
+
+    // Payment method will be "COD" or "Razorpay"
+    const payload = {
+      userId,
+      cartId,
+      cartItems: adjustedCartItems,
+      totalAmount: paymentMethodType === "COD" ? Total + codFee : Total,
+      paymentMethod: paymentMethodType,
+      addressInfo: {
+        name: address.name,
+        email: address.email,
+        phone: address.phone,
+        street: address.street,
+        city: address.city,
+        postalCode: address.postalCode,
+        state: address.state,
+      },
+    };
+
+    const response = await fetch(
+      `${process.env.REACT_APP_BACKEND_URL}/create-order`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }
+    );
+    const orderData = await response.json();
+    return orderData;
   };
 
-  // COD Flow
+  // Cash on Delivery Payment
   const handleCODPayment = async () => {
     if (!user) {
       alert("User is not logged in!");
@@ -156,56 +162,22 @@ const CheckoutPage = () => {
       toast.error("Phone number must be exactly 10 digits!");
       return;
     }
-    const userId = user.id;
-    const adjustedCartItems = cartItems.map((item) => ({
-      productId: item.productId,
-      productName: item.productName,
-      imgsrc: item.imgsrc,
-      price: item.price,
-      selectedSize: item.selectedSize,
-      selectedColor: item.selectedColor,
-      quantity: item.quantity,
-    }));
+
     try {
-      const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/create-order`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId,
-            cartId,
-            cartItems: adjustedCartItems,
-            totalAmount: Total,
-            paymentMethod: "COD",
-            addressInfo: { ...address },
-          }),
-        }
-      );
-      const orderData = await response.json();
-      if (!orderData.dbOrderId) {
-        throw new Error("COD order creation failed");
+      const orderData = await createOrder("COD");
+      if (!orderData.orderId) {
+        throw new Error("Order creation failed");
       }
-      await initiateShippingOrder(
-        {
-          cartItems: adjustedCartItems,
-          addressInfo: address,
-          totalAmount: Total,
-          orderId: orderData.dbOrderId,
-        },
-        "COD"
-      );
-      toast.success(
-        "COD order placed! Payment will be collected on delivery."
-      );
+      toast.success("COD order placed successfully!");
+      // Optionally, you can navigate to an order summary page or clear the cart
     } catch (error) {
-      alert("Error creating COD order. Please try again.");
-      console.error(error);
+      toast.error("Error placing COD order. Please try again.");
+      console.error("Error creating COD order:", error);
     }
   };
 
-  // Online Payment Flow with Razorpay
-  const handleOnlinePayment = async () => {
+  // Razorpay (Online) Payment
+  const handleRazorpayPayment = async () => {
     if (!user) {
       alert("User is not logged in!");
       navigate("/login");
@@ -219,53 +191,22 @@ const CheckoutPage = () => {
       toast.error("Phone number must be exactly 10 digits!");
       return;
     }
-    const userId = user.id;
-    const adjustedCartItems = cartItems.map((item) => ({
-      productId: item.productId,
-      productName: item.productName,
-      imgsrc: item.imgsrc,
-      price: item.price,
-      selectedSize: item.selectedSize,
-      selectedColor: item.selectedColor,
-      quantity: item.quantity,
-    }));
+
     try {
-      const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/create-order`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId,
-            cartId,
-            cartItems: adjustedCartItems,
-            totalAmount: Total,
-            paymentMethod: "Razorpay",
-            addressInfo: { ...address },
-          }),
-        }
-      );
-      const orderData = await response.json();
+      const orderData = await createOrder("Razorpay");
       if (!orderData.orderId) {
         throw new Error("Order creation failed");
       }
+
       const options = {
-        key: process.env.REACT_APP_RAZORPAY_KEY,
-        amount: orderData.amount, // in paise
+        key: RAZORPAY_KEY,
+        amount: orderData.amount, // Amount in paise
         currency: "INR",
         order_id: orderData.orderId,
-        handler: (razorpayResponse) => {
+        handler: function (response) {
           alert("Payment successful!");
-          console.log("Payment successful!", razorpayResponse);
-          initiateShippingOrder(
-            {
-              cartItems: adjustedCartItems,
-              addressInfo: address,
-              totalAmount: Total,
-              orderId: orderData.orderId,
-            },
-            "ONLINE"
-          );
+          console.log("Payment successful!", response);
+          // Optionally, update order status in your backend here
         },
         prefill: {
           name: address.name,
@@ -274,164 +215,140 @@ const CheckoutPage = () => {
         },
         theme: { color: "#F37254" },
       };
+
       const rzp = new window.Razorpay(options);
       rzp.open();
     } catch (error) {
       alert("Error creating order. Please try again.");
-      console.error(error);
+      console.error("Error creating Razorpay order:", error);
     }
   };
 
-  // Main form submission (decides payment method)
+  // Submit handler to select the proper flow
   const handleSubmit = (e) => {
     e.preventDefault();
     if (paymentMethod === "COD") {
+      // For COD, just create order and show success message
       handleCODPayment();
-    } else {
-      handleOnlinePayment();
+    } else if (paymentMethod === "ONLINE") {
+      // For Online Payment, create order then open Razorpay dashboard
+      handleRazorpayPayment();
     }
   };
 
   return (
-    <Grow in timeout={800}>
-      <Container maxWidth="sm" sx={{ mt: 4, mb: 4 }}>
-        <Paper
-          elevation={6}
-          sx={{
-            p: 4,
-            borderRadius: 3,
-            background:
-              "linear-gradient(135deg, rgba(255,255,255,0.9), rgba(240,240,240,0.9))",
-          }}
-        >
-          <Fade in timeout={1000}>
-            <Typography variant="h4" align="center" gutterBottom sx={{ fontWeight: 600 }}>
-              Checkout
-            </Typography>
-          </Fade>
-          {cartItems.length === 0 ? (
-            <Typography variant="body1" align="center">
-              Your cart is empty. Please add items first.
-            </Typography>
-          ) : (
-            <form onSubmit={handleSubmit}>
-              <Grid container spacing={2}>
-                {/* Delivery Information */}
-                <Grid item xs={12}>
-                  <Typography variant="h6" sx={{ fontWeight: 500, mb: 1 }}>
-                    Delivery Information
-                  </Typography>
-                </Grid>
-                {[
-                  { label: "Name", name: "name" },
-                  { label: "Email", name: "email" },
-                  { label: "Phone", name: "phone" },
-                  { label: "Street", name: "street" },
-                  { label: "City", name: "city" },
-                  { label: "Postal Code", name: "postalCode" },
-                  { label: "State", name: "state" },
-                ].map((field) => (
-                  <Grid item xs={12} key={field.name}>
-                    <TextField
-                      fullWidth
-                      label={field.label}
-                      name={field.name}
-                      value={address[field.name]}
-                      onChange={handleChange}
-                      required
-                      variant="outlined"
-                      sx={{ backgroundColor: "#fff", borderRadius: 1 }}
-                    />
-                  </Grid>
-                ))}
+    <div className="checkout-container">
+      <div className="checkout-paper">
+        <h1 className="checkout-title">Checkout</h1>
+        <form onSubmit={handleSubmit}>
+          {/* Delivery Information */}
+          <div className="section">
+            <h2>Delivery Information</h2>
+            <div className="input-container">
+              {[
+                { label: "Name", name: "name", type: "text" },
+                { label: "Email", name: "email", type: "email" },
+                { label: "Phone", name: "phone", type: "tel" },
+                { label: "Street", name: "street", type: "text" },
+                { label: "City", name: "city", type: "text" },
+                { label: "Postal Code", name: "postalCode", type: "text" },
+                { label: "State", name: "state", type: "text" },
+              ].map((field) => (
+                <input
+                  key={field.name}
+                  type={field.type}
+                  name={field.name}
+                  placeholder={field.label}
+                  value={address[field.name]}
+                  onChange={handleChange}
+                  required
+                />
+              ))}
+            </div>
+          </div>
 
-                {/* OTP Section */}
-                <Grid item xs={12}>
-                  {!otpSent ? (
-                    <Button
-                      variant="contained"
-                      color="secondary"
-                      onClick={handleSendOTP}
-                      fullWidth
-                      sx={{ py: 1.5, fontWeight: "bold" }}
-                    >
-                      Send OTP
-                    </Button>
-                  ) : (
-                    <>
-                      <TextField
-                        fullWidth
-                        label="Enter OTP"
-                        value={otp}
-                        onChange={(e) => setOtp(e.target.value)}
-                        variant="outlined"
-                        sx={{ mb: 1, backgroundColor: "#fff", borderRadius: 1 }}
-                      />
-                      <Button
-                        variant="contained"
-                        color="secondary"
-                        onClick={handleVerifyOTP}
-                        fullWidth
-                        sx={{ py: 1.5, fontWeight: "bold" }}
-                      >
-                        Verify OTP
-                      </Button>
-                    </>
-                  )}
-                </Grid>
+          {/* OTP Verification */}
+          <div className="section">
+            <h2 className="mt-4">OTP Verification</h2>
+            <div className="input-container">
+              {!otpSent ? (
+                <button type="button" onClick={handleSendOTP} className="btnC">
+                  SEND OTP
+                </button>
+              ) : (
+                <>
+                  <input
+                    type="text"
+                    placeholder="Enter OTP"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                  />
+                  <button type="button" onClick={handleVerifyOTP} className="btnC">
+                    Verify
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
 
-                {/* Payment Method */}
-                <Grid item xs={12}>
-                  <FormControl component="fieldset" fullWidth>
-                    <FormLabel component="legend" sx={{ mb: 1 }}>
-                      Payment Method
-                    </FormLabel>
-                    <RadioGroup
-                      row
-                      value={paymentMethod}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                    >
-                      <FormControlLabel
-                        value="ONLINE"
-                        control={<Radio />}
-                        label="Online Payment"
-                      />
-                      <FormControlLabel
-                        value="COD"
-                        control={<Radio />}
-                        label="Cash on Delivery"
-                      />
-                    </RadioGroup>
-                  </FormControl>
-                </Grid>
+          {/* Payment Method */}
+          <div className="section">
+            <h2>Payment Method</h2>
+            <div className="radio-container mt-4">
+              <label>
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value="ONLINE"
+                  checked={paymentMethod === "ONLINE"}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="mr-4"
+                />
+                Online Payment
+              </label>
+              <label className="ml-4">
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value="COD"
+                  checked={paymentMethod === "COD"}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="mr-4"
+                />
+                Cash on Delivery
+              </label>
+            </div>
+          </div>
 
-                <Grid item xs={12}>
-                  <Divider sx={{ my: 2 }} />
-                  <Typography variant="h6" sx={{ fontWeight: 500 }}>
-                    Order Summary
-                  </Typography>
-                  <Typography variant="body1">Total: ₹{Total}</Typography>
-                </Grid>
+          {/* Order Summary */}
+          <div className="section order-summary">
+            <h2>Order Summary</h2>
+            <div className="summary-row">
+              <span>Subtotal:</span>
+              <span>₹{Total}</span>
+            </div>
+            {paymentMethod === "COD" && (
+              <div className="summary-row">
+                <span>COD Fee:</span>
+                <span>₹{codFee}</span>
+              </div>
+            )}
+            <hr />
+            <div className="summary-row total">
+              <span>Total:</span>
+              <span>₹{finalTotal}</span>
+            </div>
+          </div>
 
-                <Grid item xs={12}>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    color="primary"
-                    fullWidth
-                    size="large"
-                    disabled={!phoneVerified}
-                    sx={{ py: 1.8, fontWeight: "bold", mt: 1 }}
-                  >
-                    Place Order
-                  </Button>
-                </Grid>
-              </Grid>
-            </form>
-          )}
-        </Paper>
-      </Container>
-    </Grow>
+          {/* Place Order Button */}
+          <div className="section">
+            <button type="submit" className="place-order-btn" disabled={!phoneVerified}>
+              Place Order
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 };
 

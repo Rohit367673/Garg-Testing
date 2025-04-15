@@ -19,19 +19,32 @@ const AdminOrders = () => {
     fetchOrders();
   }, []);
 
-  // A generic handler to update order status
+  // Handler to update order status
   const handleUpdateOrder = async (orderId, newStatus) => {
     try {
-      const response = await axios.put(`${process.env.REACT_APP_BACKEND_URL}/orders/${orderId}`, { orderStatus: newStatus });
-      console.log('Order updated:', response.data);
-
+      const response = await axios.put(
+        `${process.env.REACT_APP_BACKEND_URL}/orders/${orderId}`,
+        { orderStatus: newStatus }
+      );
+      console.log("Order updated:", response.data);
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order._id === orderId ? { ...order, orderStatus: newStatus } : order
         )
       );
     } catch (error) {
-      console.error('Error updating order:', error);
+      console.error("Error updating order:", error);
+    }
+  };
+
+  const handleRemoveOrder = async (order) => {
+    try {
+      await axios.put(`${process.env.REACT_APP_BACKEND_URL}/orders/${order._id}/complete`);
+      await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/orders/${order._id}`);
+      setOrders((prevOrders) => prevOrders.filter((o) => o._id !== order._id));
+      console.log("Order moved to history and removed successfully");
+    } catch (error) {
+      console.error("Error moving order to history:", error);
     }
   };
 
@@ -42,7 +55,6 @@ const AdminOrders = () => {
       </Typography>
       <Grid container spacing={3}>
         {orders.map((order) => {
-          // Normalize order status for comparison
           const status = order.orderStatus ? order.orderStatus.toLowerCase() : "";
           return (
             <Grid item xs={12} key={order._id}>
@@ -53,6 +65,9 @@ const AdminOrders = () => {
                 </Typography>
                 <Typography variant="body1">
                   <strong>Payment Status:</strong> {order.paymentStatus}
+                </Typography>
+                <Typography variant="body1">
+                  <strong>Payment Method:</strong> {order.paymentMethod}
                 </Typography>
                 <Typography variant="body1">
                   <strong>Total Amount:</strong> ₹{order.totalAmount}
@@ -141,9 +156,19 @@ const AdminOrders = () => {
                     </Button>
                   )}
                   {status === "delivered" && (
-                    <Typography variant="body1" sx={{ color: "green" }}>
-                      Delivered
-                    </Typography>
+                    <Box>
+                      <Typography variant="body1" sx={{ color: "green" }}>
+                        Delivered
+                      </Typography>
+                      <Button
+                        variant="contained"
+                        color="secondary"
+                        sx={{ mt: 1 }}
+                        onClick={() => handleRemoveOrder(order)}
+                      >
+                        Complete Order
+                      </Button>
+                    </Box>
                   )}
                 </Box>
               </Paper>

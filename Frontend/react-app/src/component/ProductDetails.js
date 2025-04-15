@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { addToCart, calculatePrice } from "../redux/CartSlice";
 import axios from "axios";
@@ -26,13 +26,13 @@ const ProductDetails = () => {
   const { productId } = useParams();
   const { user } = useContext(AuthContext);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
-
   // Review states
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
@@ -54,9 +54,10 @@ const ProductDetails = () => {
       }
     };
     fetchProduct();
+    setCurrentImageIndex(0);
   }, [productId]);
 
-  // Fetch related products using the correct field "Catagory"
+  // Fetch related products based on category
   useEffect(() => {
     const fetchRelatedProducts = async () => {
       if (product?.Catagory) {
@@ -64,35 +65,40 @@ const ProductDetails = () => {
           const response = await axios.get(
             `${process.env.REACT_APP_BACKEND_URL}/api/products?category=${product.Catagory}`
           );
-          setRelatedProducts(response.data);
+          setRelatedProducts(response.data.products || []);
         } catch (error) {
           console.error("Error fetching related products:", error.message);
+          setRelatedProducts([]);
         }
       }
     };
     fetchRelatedProducts();
   }, [product]);
 
-  // Fetch reviews
-  const fetchReviews = async () => {
-    try {
-      const response = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/reviews/${product?._id}`
-      );
-      setReviews(response.data);
-    } catch (error) {
-      console.error("Error fetching reviews:", error.message);
-    }
-  };
-
+  // Fetch reviews for the current product
   useEffect(() => {
-    if (product) fetchReviews();
+    const fetchReviews = async () => {
+      if (product?._id) {
+        try {
+          const response = await axios.get(
+            `${process.env.REACT_APP_BACKEND_URL}/api/reviews/${product._id}`
+          );
+          setReviews(response.data);
+        } catch (error) {
+          console.error("Error fetching reviews:", error.message);
+        }
+      }
+    };
+    if (product) {
+      fetchReviews();
+    }
   }, [product]);
 
-  // Add to Cart
+  // Add product to cart
   const addToCartHandler = async () => {
     if (!user) {
       toast.error("Please log in to add products to your cart.");
+      navigate("/Login");
       return;
     }
     if (!selectedSize || !selectedColor) {
@@ -103,7 +109,7 @@ const ProductDetails = () => {
       userId: user.id,
       productId: product._id,
       productName: product.name,
-      imgsrc: product.images?.[0] ? product.images[0] : "placeholder.jpg",
+      imgsrc: product.images?.[0] || "placeholder.jpg",
       price: product.price,
       quantity: 1,
       selectedSize,
@@ -122,30 +128,44 @@ const ProductDetails = () => {
     }
   };
 
+  // For demonstration: handle a purchase that reduces stock by a given quantity
+  const handlePurchase = async (purchaseQty) => {
+    try {
+      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/purchase`, {
+        productId: product._id,
+        purchaseQty,
+      });
+      setProduct((prev) => ({
+        ...prev,
+        quantity: response.data.newQuantity,
+      }));
+      toast.success("Purchase successful!");
+    } catch (error) {
+      console.error("Error during purchase:", error.response?.data.error || error.message);
+      toast.error(error.response?.data.error || "Purchase failed");
+    }
+  };
+
   // Image slider navigation
   const nextImage = () => {
-    setCurrentImageIndex((prev) =>
-      prev + 1 < product.images.length ? prev + 1 : 0
-    );
+    if (product?.images?.length > 0) {
+      setCurrentImageIndex((prev) =>
+        prev + 1 < product.images.length ? prev + 1 : 0
+      );
+    }
   };
 
   const prevImage = () => {
-    setCurrentImageIndex((prev) =>
-      prev - 1 >= 0 ? prev - 1 : product.images.length - 1
-    );
+    if (product?.images?.length > 0) {
+      setCurrentImageIndex((prev) =>
+        prev - 1 >= 0 ? prev - 1 : product.images.length - 1
+      );
+    }
   };
 
-  // Handle related product click
-  const handleRelatedProductClick = async (relatedProductId) => {
-    try {
-      const response = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/products/${relatedProductId}`
-      );
-      setProduct(response.data);
-      window.scrollTo(0, 0);
-    } catch (error) {
-      console.error("Error fetching related product:", error.message);
-    }
+  // Handle click on a related product
+  const handleRelatedProductClick = (relatedProductId) => {
+    navigate(`/product/${relatedProductId}`);
   };
 
   // Handle review submission
@@ -173,14 +193,16 @@ const ProductDetails = () => {
       toast.success("Review submitted successfully!");
       setRating(0);
       setReviewText("");
-      fetchReviews();
+      // Refresh the reviews list
+      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/reviews/${product._id}`);
+      setReviews(response.data);
     } catch (error) {
       console.error("Error submitting review:", error);
       toast.error("Error submitting your review.");
     }
   };
 
-  // Define the slider block
+  // Render product image slider
   const renderSlider = (
     <Box
       sx={{
@@ -191,7 +213,6 @@ const ProductDetails = () => {
         mb: isDesktop ? 0 : 3,
       }}
     >
-      {/* Slider Controls */}
       <IconButton
         sx={{
           position: "absolute",
@@ -209,7 +230,7 @@ const ProductDetails = () => {
       <Fade in timeout={500}>
         <Box
           component="img"
-          src={product?.images[currentImageIndex]}
+          src={product?.images?.[currentImageIndex] || "placeholder.jpg"}
           alt={product?.name}
           sx={{
             width: "100%",
@@ -236,9 +257,8 @@ const ProductDetails = () => {
         <ArrowForwardIosIcon sx={{ color: "black" }} />
       </IconButton>
 
-      {/* Thumbnails */}
       <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-        {product?.images.map((img, idx) => (
+        {product?.images?.map((img, idx) => (
           <Box
             key={idx}
             component="img"
@@ -251,10 +271,7 @@ const ProductDetails = () => {
               mx: 0.5,
               borderRadius: 1,
               cursor: "pointer",
-              border:
-                currentImageIndex === idx
-                  ? "2px solid #007bff"
-                  : "2px solid transparent",
+              border: currentImageIndex === idx ? "2px solid #007bff" : "2px solid transparent",
               transition: "border-color 0.3s ease",
               objectFit: "contain",
             }}
@@ -264,7 +281,7 @@ const ProductDetails = () => {
     </Box>
   );
 
-  // Define the product details block.
+  // Render product details (including dynamic stock display)
   const renderDetails = (
     <Box
       sx={{
@@ -277,16 +294,16 @@ const ProductDetails = () => {
         {product?.name}
       </Typography>
       <Typography variant="h6" sx={{ color: "#007bff", mb: 1 }}>
-        ₹{product?.price}
+       <strong>Price:</strong>  ₹{product?.price}
       </Typography>
       <Divider sx={{ mb: 2 }} />
-
       <Typography variant="body1" sx={{ mb: 2 }}>
         {product?.description}
       </Typography>
       <Typography variant="body2" sx={{ mb: 2 }}>
-        <strong>Stock:</strong> {product?.stock}
-      </Typography>
+  <strong>Stock:</strong> {product?.quantity > 0 ? "In Stock" : "Out Of Stock"}
+</Typography>
+
 
       {/* Size Selection */}
       {product?.size?.length > 0 && (
@@ -354,6 +371,8 @@ const ProductDetails = () => {
           CHECK-OUT
         </Button>
       </Link>
+     
+     
     </Box>
   );
 
@@ -378,19 +397,12 @@ const ProductDetails = () => {
               </>
             )}
 
-            {/* Similar Products */}
+            {/* Similar Products Section */}
             <Box sx={{ mt: 4 }}>
               <Typography variant="h5" sx={{ mb: 2 }}>
                 Similar Products
               </Typography>
-              <Box
-                sx={{
-                  display: "flex",
-                  overflowX: "auto",
-                  gap: 2,
-                  py: 1,
-                }}
-              >
+              <Box sx={{ display: "flex", overflowX: "auto", gap: 2, py: 1 }}>
                 {relatedProducts.length === 0 ? (
                   <Typography>Loading related products...</Typography>
                 ) : (
@@ -407,13 +419,11 @@ const ProductDetails = () => {
                         transition: "transform 0.3s ease",
                         "&:hover": { transform: "scale(1.05)" },
                       }}
-                      onClick={() =>
-                        handleRelatedProductClick(item._id || item.id)
-                      }
+                      onClick={() => handleRelatedProductClick(item._id || item.id)}
                     >
                       <Box
                         component="img"
-                        src={item.images?.[0] ? item.images[0] : "placeholder.jpg"}
+                        src={item.images?.[0] || "placeholder.jpg"}
                         alt={item.name}
                         sx={{
                           width: "100%",
@@ -459,7 +469,6 @@ const ProductDetails = () => {
               <Typography variant="h5" sx={{ mb: 2 }}>
                 Product Reviews
               </Typography>
-
               {reviews.length > 0 ? (
                 reviews.map((rev) => (
                   <Box key={rev._id} sx={{ borderBottom: "1px solid #ddd", py: 1 }}>
@@ -476,7 +485,6 @@ const ProductDetails = () => {
               ) : (
                 <Typography>No reviews yet. Be the first to review this product.</Typography>
               )}
-
               {user ? (
                 <Box component="form" onSubmit={handleReviewSubmit} sx={{ mt: 2 }}>
                   <Typography variant="h6" sx={{ mb: 1 }}>
@@ -508,7 +516,6 @@ const ProductDetails = () => {
           </>
         )}
       </Box>
-
       <Footer />
     </>
   );

@@ -114,7 +114,7 @@ function Login() {
         </button>
       </div>
     </div>
-    {error && <p style={{ color: "red", marginLeft: "7rem", marginTop: "-1rem" }}>{error}</p>}
+    {error && <p style={{ color: "red", marginLeft: "4rem"}}>{error}</p>}
     <button type="submit" className="btn w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition duration-200"
     >Login</button>
     <p className="signup-text">

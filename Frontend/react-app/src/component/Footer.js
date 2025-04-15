@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { FaFacebook, FaInstagramSquare } from "react-icons/fa";
+import { FaFacebook, FaInstagramSquare,FaWhatsapp} from "react-icons/fa";
 const Footer = () => {
   return (
     <>
@@ -42,7 +42,7 @@ const Footer = () => {
   <h1 className='text-xl'> Follow Us</h1> <Link to="https://www.facebook.com/gargmodwears"><FaFacebook  className='text-3xl cursor-pointer'/></Link>
    
   <Link to="https://www.instagram.com/garg_exclusive_?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==">  <FaInstagramSquare className='text-3xl cursor-pointer' /></Link>
-  
+  <Link to="https://chat.whatsapp.com/HpSfow7A3DSFC8CerHcKF6" target="_blank"><FaWhatsapp className='text-3xl cursor-pointer'/></Link>
     
   </div>
 </footer>

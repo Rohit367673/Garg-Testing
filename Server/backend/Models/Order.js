@@ -57,18 +57,17 @@ const OrderSchema = new mongoose.Schema(
       type: Number, 
       required: true 
     },
-    razorpayOrderId: { 
-      type: String,
-    },
-    orderDate: { 
-      type: Date, 
-      default: Date.now 
-    },
+    razorpayOrderId: { type: String },
+    orderDate: { type: Date, default: Date.now },
     paymentId: { type: String },
     payerId: { type: String },
+
+    // New Field: Marks orders for deletion after 7 days
+    archivedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );
+
 
 const OrderModel = mongoose.model("Order", OrderSchema);
 export default OrderModel;

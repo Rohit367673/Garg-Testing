@@ -16,7 +16,7 @@ import {
   Step,
   StepLabel,
 } from "@mui/material";
-import { Link } from "react-router-dom"; // Import Link
+import { Link } from "react-router-dom";
 
 const UserOrders = () => {
   const { user } = useContext(AuthContext);
@@ -67,7 +67,6 @@ const UserOrders = () => {
   // Define the order progress steps
   const steps = ["Pending", "Approved", "Shipped", "Delivered"];
 
-  // Helper to determine the active step based on order status
   const getActiveStep = (status) => {
     switch (status?.toLowerCase()) {
       case "pending":
@@ -165,6 +164,11 @@ const UserOrders = () => {
                       Status: {order.orderStatus}
                     </Typography>
                     <Divider sx={{ my: 1 }} />
+                    {/* Show Payment Method */}
+                    <Typography variant="body2" color="text.secondary">
+                      Payment Method: {order.paymentMethod}
+                    </Typography>
+                    {/* Optionally show Payment Status if needed */}
                     <Typography variant="body2" color="text.secondary">
                       Payment: {order.paymentStatus}
                     </Typography>
@@ -188,7 +192,6 @@ const UserOrders = () => {
                       Items:
                     </Typography>
                     {order.cartItems.map((item, index) => (
-                      // Wrap each product item with a Link that points to the product details page
                       <Link
                         key={index}
                         to={`/product/${item.productId}`}

@@ -79,7 +79,7 @@ const Sidebar = () => {
             <ListItemText primary="Slider" />
           </ListItem>
           {/* Logout Button */}
-          <ListItem button onClick={handleLogout} sx={{ color: "#fff" }}>
+          <ListItem button onClick={handleLogout} sx={{ color: "red" }}>
             <ListItemText primary="Logout" />
           </ListItem>
         </List>
