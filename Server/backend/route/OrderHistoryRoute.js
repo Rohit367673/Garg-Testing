@@ -1,49 +1,50 @@
 import express from "express";
-import OrderModel from"../Models/Order.js"
-
 const router = express.Router();
+import Order from "../Models/Order.js"
 
-// ✅ Fetch Order History (Only Completed Orders)
-router.get("/order-history", async (req, res) => {
+
+
+
+router.put("/:orderId/complete", async (req, res) => {
   try {
-    const historyOrders = await OrderModel.find({ orderStatus: "Completed" }).sort({ archivedAt: -1 });
-    res.json(historyOrders);
+    const { orderId } = req.params;
+
+    // Update the order status to "completed"
+    const updatedOrder = await Order.findByIdAndUpdate(
+      orderId,
+      { orderStatus: "completed" },
+      { new: true }
+    );
+
+    if (!updatedOrder) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    res.status(200).json({
+      message: "Order marked as completed",
+      order: updatedOrder,
+    });
   } catch (error) {
-    console.error("Error fetching order history:", error);
-    res.status(500).json({ message: "Error fetching order history" });
+    console.error("Error marking order as complete:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
-// ✅ Move Completed Orders to Order History
-router.put("/order-history/:id/complete", async (req, res) => {
+// DELETE route to remove the order from the active orders collection (if ever needed)
+router.delete("/:orderId", async (req, res) => {
   try {
-    const order = await OrderModel.findById(req.params.id);
-    if (!order) return res.status(404).json({ message: "Order not found" });
+    const { orderId } = req.params;
 
-    order.orderStatus = "Completed";
-    order.archivedAt = new Date(); // Store the completion date
-    await order.save();
+    const deletedOrder = await Order.findByIdAndRemove(orderId);
+    if (!deletedOrder) {
+      return res.status(404).json({ error: "Order not found" });
+    }
 
-    res.json({ message: "Order moved to history", order });
+    res.status(200).json({ message: "Order removed successfully" });
   } catch (error) {
-    console.error("Error updating order:", error);
-    res.status(500).json({ message: "Error updating order" });
+    console.error("Error deleting order:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
-// ✅ Delete Orders Older Than 7 Days
-router.delete("/order-history/cleanup", async (req, res) => {
-  try {
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-    await OrderModel.deleteMany({ archivedAt: { $lte: sevenDaysAgo } });
-
-    res.json({ message: "Old orders deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting old orders:", error);
-    res.status(500).json({ message: "Error deleting old orders" });
-  }
-});
-
-export default router;
+export default router
