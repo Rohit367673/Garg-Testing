@@ -1,3 +1,4 @@
+// src/components/AdminOrders.jsx
 import React, { useEffect, useState } from "react";
 import { Box, Typography, Paper, Button, Grid } from "@mui/material";
 import axios from "axios";
@@ -8,7 +9,9 @@ const AdminOrders = () => {
   // Fetch all orders from the backend
   const fetchOrders = async () => {
     try {
-      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/orders`);
+      const response = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/orders`
+      );
       setOrders(response.data);
     } catch (error) {
       console.error("Error fetching orders:", error);
@@ -37,14 +40,17 @@ const AdminOrders = () => {
     }
   };
 
-  const handleRemoveOrder = async (order) => {
+  // Handler to mark order complete (UI-only) without deleting from DB
+  const handleCompleteOrder = async (orderId) => {
     try {
-      await axios.put(`${process.env.REACT_APP_BACKEND_URL}/orders/${order._id}/complete`);
-      await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/orders/${order._id}`);
-      setOrders((prevOrders) => prevOrders.filter((o) => o._id !== order._id));
-      console.log("Order moved to history and removed successfully");
+      // 1. Mark as completed in the database
+      await axios.put(
+        `${process.env.REACT_APP_BACKEND_URL}/api/orders/${orderId}/complete`
+      );
+      // 2. Remove from the UI state
+      setOrders((prev) => prev.filter((o) => o._id !== orderId));
     } catch (error) {
-      console.error("Error moving order to history:", error);
+      console.error("Error completing order:", error);
     }
   };
 
@@ -55,7 +61,7 @@ const AdminOrders = () => {
       </Typography>
       <Grid container spacing={3}>
         {orders.map((order) => {
-          const status = order.orderStatus ? order.orderStatus.toLowerCase() : "";
+          const status = order.orderStatus?.toLowerCase() || "";
           return (
             <Grid item xs={12} key={order._id}>
               <Paper sx={{ padding: 2, marginBottom: 2 }}>
@@ -76,8 +82,7 @@ const AdminOrders = () => {
                 <Box mt={1}>
                   <Typography variant="subtitle1">Address Details:</Typography>
                   <Typography variant="body2">
-                    {order.addressInfo.address}, {order.addressInfo.city},{" "}
-                    {order.addressInfo.pincode}
+                    {order.addressInfo.address}, {order.addressInfo.city}, {order.addressInfo.pincode}
                   </Typography>
                   <Typography variant="body2">
                     Phone: {order.addressInfo.phone}
@@ -164,7 +169,7 @@ const AdminOrders = () => {
                         variant="contained"
                         color="secondary"
                         sx={{ mt: 1 }}
-                        onClick={() => handleRemoveOrder(order)}
+                        onClick={() => handleCompleteOrder(order._id)}
                       >
                         Complete Order
                       </Button>
