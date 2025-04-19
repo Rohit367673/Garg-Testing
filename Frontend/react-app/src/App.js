@@ -41,7 +41,7 @@ import TermsAndPolicy from "./component/TermsPolicy";
 
 function App() {
   return (
-    <GoogleOAuthProvider clientId="663051077642-lk27c11jh230j4vdcb6sduj5fp4jela4.apps.googleusercontent.com">
+    <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
       <AuthProvider>
         <Router>
           <Header />
