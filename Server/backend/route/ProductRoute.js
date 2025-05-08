@@ -37,60 +37,59 @@ const upload = multer({
 });
 
 // POST /api/products - Create a new product with Cloudinary image uploads
+
 router.post("/products", upload.array("images", 10), async (req, res) => {
   try {
     const { name, description, price, size, color, quantity, Catagory, brand } = req.body;
-    
     if (!name || !price || !Catagory) {
       return res.status(400).json({ error: "Name, price and Catagory are required" });
     }
 
-    let parsedSize = size;
-    let parsedColor = color;
-    try {
-      if (typeof size === "string") {
-        parsedSize = JSON.parse(size);
-      }
-    } catch (err) {
+    // Ensure size is always array
+    let parsedSize;
+    if (Array.isArray(size)) {
+      parsedSize = size;
+    } else if (typeof size === "string") {
+      parsedSize = size.split(",").map(s => s.trim()).filter(Boolean);
+    } else {
       parsedSize = [];
     }
-    try {
-      if (typeof color === "string") {
-        parsedColor = JSON.parse(color);
-      }
-    } catch (err) {
+
+    // Ensure color is always array
+    let parsedColor;
+    if (Array.isArray(color)) {
+      parsedColor = color;
+    } else if (typeof color === "string") {
+      parsedColor = color.split(",").map(c => c.trim()).filter(Boolean);
+    } else {
       parsedColor = [];
     }
 
-    // Upload images to Cloudinary
-    const uploadPromises = req.files.map((file) => {
+    // Upload images
+    const uploadPromises = req.files.map(file => {
       const dataURI = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
       return cloudinary.uploader.upload(dataURI, { folder: "product_images" });
     });
-    const uploadResults = await Promise.all(uploadPromises);
-    const imageUrls = uploadResults.map((result) => result.secure_url);
+    const results = await Promise.all(uploadPromises);
+    const imageUrls = results.map(r => r.secure_url);
 
-    // Create the product object with the initial stock quantity
     const product = new ProductModel({
       name,
       description,
       price,
       size: parsedSize,
       color: parsedColor,
-      quantity,  // initial stock count
+      quantity,
       Catagory,
-      images: imageUrls,
       brand,
+      images: imageUrls,
     });
 
-    const savedProduct = await product.save();
-    res.status(201).json({
-      message: "Product created successfully",
-      product: savedProduct,
-    });
-  } catch (error) {
-    console.error("Error adding product:", error);
-    res.status(500).json({ error: error.message || "Internal Server Error" });
+    const saved = await product.save();
+    return res.status(201).json({ message: "Product created successfully", product: saved });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: err.message || "Internal Server Error" });
   }
 });
 
