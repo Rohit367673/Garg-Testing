@@ -300,6 +300,9 @@ const ProductDetails = () => {
       <Typography variant="body1" sx={{ mb: 2 }}>
         {product?.description}
       </Typography>
+      <Typography variant="h6" sx={{ color: "#007bff", mb: 1 }}>
+       <strong>Brand:</strong>  {product?.brand}
+      </Typography>
       <Typography variant="body2" sx={{ mb: 2 }}>
   <strong>Stock:</strong> {product?.quantity > 0 ? "In Stock" : "Out Of Stock"}
 </Typography>
