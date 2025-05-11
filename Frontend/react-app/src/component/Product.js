@@ -148,7 +148,7 @@ const Product = () => {
                       }}
                     />
                     <CardContent>
-                      <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                      <Typography variant="h6" sx={{ fontWeight: "bold",fontSize: "16px" }}>
                         {product.name}
                       </Typography>
                       <Typography variant="h6" color="primary" sx={{ marginTop: 1 }}>
