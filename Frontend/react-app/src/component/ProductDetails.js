@@ -348,19 +348,26 @@ const ProductDetails = () => {
         </Box>
       )}
 
-      <Button
-        variant="contained"
-        sx={{
-          width: "100%",
-          backgroundColor: "#000",
-          color: "#fff",
-          mb: 1,
-          "&:hover": { backgroundColor: "#ff6347" },
-        }}
-        onClick={addToCartHandler}
-      >
-        ADD TO CART
-      </Button>
+   <Button
+  variant="contained"
+  sx={{
+    width: "100%",
+    backgroundColor: "#000",
+    color: "#fff",
+    mb: 1,
+    "&:hover": { backgroundColor: product?.quantity > 0 ? "#ff6347" : "#000" },
+  }}
+  disabled={product?.quantity <= 0}
+  onClick={() => {
+    if (product?.quantity > 0) {
+      addToCartHandler();
+    } else {
+      toast.error("Out of stock");
+    }
+  }}
+>
+  ADD TO CART
+</Button>
       <Link to="/cart" style={{ textDecoration: "none" }}>
         <Button
           variant="contained"
