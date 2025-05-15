@@ -81,6 +81,9 @@ const TermsAndPolicies = () => {
             Email: gargexclusive@gmail.com<br />
             Address: Birta, Himachal Pradesh, India
           </Typography>
+          <Typography variant="h6" gutterBottom>
+           Website Developer: rohit367673@gmail.com
+          </Typography>
         </Box>
       </Box>
     </Container>
