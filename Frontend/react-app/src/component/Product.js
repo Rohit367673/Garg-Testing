@@ -34,7 +34,7 @@ const Product = () => {
       const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products`, {
         params: {
           page,
-          limit: 15, 
+          limit: 16, 
           category: selectedCategory === "all" ? "All" : selectedCategory,
         },
       });
