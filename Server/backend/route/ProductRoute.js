@@ -94,13 +94,12 @@ router.post("/products", upload.array("images", 10), async (req, res) => {
 });
 
 // GET /api/products - Fetch products with optional filtering and pagination.
+// GET /api/products - Fetch products with optional filtering and pagination.
 router.get("/products", async (req, res) => {
   try {
     const { category, brand, page, limit } = req.query;
-    const pageNum = parseInt(page) || 1;
-    const limitNum = parseInt(limit) || 10;
-    const skip = (pageNum - 1) * limitNum;
-    
+
+    // Build the basic Mongo query
     const query = {};
     if (category && category.toLowerCase() !== "all") {
       query.Catagory = category;
@@ -108,22 +107,40 @@ router.get("/products", async (req, res) => {
     if (brand && brand.toLowerCase() !== "all") {
       query.brand = brand;
     }
-    
-    const products = await ProductModel.find(query).skip(skip).limit(limitNum);
-    const totalProducts = await ProductModel.countDocuments(query);
-    const totalPages = Math.ceil(totalProducts / limitNum);
 
-    res.json({ 
-      products, 
-      totalProducts, 
-      currentPage: pageNum, 
-      totalPages 
+    // Start your Mongoose query
+    let productsQuery = ProductModel.find(query);
+
+    // Only apply pagination if `limit` is provided
+    if (limit) {
+      const pageNum  = parseInt(page, 10)  || 1;
+      const limitNum = parseInt(limit, 10) || 10;
+      const skip     = (pageNum - 1) * limitNum;
+
+      productsQuery = productsQuery
+        .skip(skip)
+        .limit(limitNum);
+    }
+
+    // Execute the query
+    const products      = await productsQuery;
+    const totalProducts = await ProductModel.countDocuments(query);
+    const totalPages    = limit
+      ? Math.ceil(totalProducts / parseInt(limit, 10))
+      : 1;
+
+    res.json({
+      products,
+      totalProducts,
+      currentPage: limit ? parseInt(page, 10) || 1 : 1,
+      totalPages
     });
   } catch (error) {
     console.error("Error fetching products:", error);
     res.status(500).json({ message: "Error fetching products" });
   }
 });
+
 
 // GET /api/products/:id - Fetch a single product by its ID.
 router.get("/products/:id", async (req, res) => {
