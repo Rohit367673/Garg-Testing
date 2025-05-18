@@ -18,79 +18,91 @@ const AddProduct = () => {
     description: "",
     price: "",
     images: [],
-
+    // In-stock values
     size: "",
     color: "",
-    stock: "In Stock",
+    // Out-of-stock values
+    outSizes: "",
+    outColors: "",
     quantity: "",
     brand: "",
     Catagory: "",
-
-    productType: "",
   });
 
-  // Handle form field changes
+  // Handle field changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setProduct({ ...product, [name]: value });
+    setProduct((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle image selection
+  // Handle image selection (preserve previous functionality)
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    setProduct((prevProduct) => ({
-      ...prevProduct,
-      images: [...prevProduct.images, ...files],
-    }));
+    setProduct((prev) => ({ ...prev, images: [...prev.images, ...files] }));
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
-    // Determine stock status based on quantity
+
+    // Determine stock status
     const stockStatus = Number(product.quantity) > 0 ? "In Stock" : "Out of Stock";
-  
+
     const formData = new FormData();
     formData.append("name", product.name);
     formData.append("description", product.description);
-    formData.append("price", Number(product.price));
-    
-    // Process comma-separated size and color fields as before
-    const sizeArray = product.size.split(",").map((s) => s.trim()).filter(s => s);
-    const colorArray = product.color.split(",").map((s) => s.trim()).filter(s => s);
-    sizeArray.forEach((s) => formData.append("size", s));
-    colorArray.forEach((c) => formData.append("color", c));
-  
-    // Append quantity, brand, and computed stock status
+    formData.append("price", product.price);
     formData.append("quantity", product.quantity);
     formData.append("brand", product.brand);
     formData.append("stock", stockStatus);
     formData.append("Catagory", product.Catagory);
-  
+
+    // Append in-stock sizes and colors
+    product.size
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .forEach((s) => formData.append("size", s));
+    product.color
+      .split(",")
+      .map((c) => c.trim())
+      .filter(Boolean)
+      .forEach((c) => formData.append("color", c));
+
+    // Append out-of-stock sizes and colors
+    product.outSizes
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .forEach((s) => formData.append("outSizes", s));
+    product.outColors
+      .split(",")
+      .map((c) => c.trim())
+      .filter(Boolean)
+      .forEach((c) => formData.append("outColors", c));
+
     // Append images
-    product.images.forEach((image) => {
-      formData.append("images", image);
-    });
-  
+    product.images.forEach((file) => formData.append("images", file));
+
     try {
-      const response = await axios.post(
+      await axios.post(
         `${process.env.REACT_APP_BACKEND_URL}/api/products`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
-      toast.success("Successfully uploaded");
-    } catch (error) {
-      console.error("Error adding product:", error);
+      toast.success("Product added successfully!");
+      // Optionally reset form here
+    } catch (err) {
+      console.error("Error adding product:", err);
+      toast.error("Failed to add product");
     }
   };
-  
+
   return (
-    <Box sx={{ margin: 3 }}>
-      <h2 className="mb-6">Add New Product</h2>
+    <Box sx={{ m: 3 }}>
+      <h2>Add New Product</h2>
       <form onSubmit={handleSubmit}>
         <Grid container spacing={2}>
-          {/* Product Name */}
+          {/* Name */}
           <Grid item xs={12}>
             <TextField
               fullWidth
@@ -100,6 +112,7 @@ const AddProduct = () => {
               onChange={handleChange}
             />
           </Grid>
+
           {/* Description */}
           <Grid item xs={12}>
             <TextField
@@ -110,6 +123,7 @@ const AddProduct = () => {
               onChange={handleChange}
             />
           </Grid>
+
           {/* Price */}
           <Grid item xs={12}>
             <TextField
@@ -120,80 +134,77 @@ const AddProduct = () => {
               onChange={handleChange}
             />
           </Grid>
-          {/* Image Upload */}
-          <Grid item xs={12}>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleImageUpload}
-              style={{ display: "block", margin: "10px 0" }}
-            />
-            <div>
-              {product.images.length > 0 &&
-                product.images.map((image, index) => (
-                  <img
-                    key={index}
-                    src={URL.createObjectURL(image)}
-                    alt={`Preview ${index}`}
-                    width="100"
-                    style={{ margin: "5px" }}
-                  />
-                ))}
-            </div>
-          </Grid>
-          {/* Catagory Selection (Storefront) */}
+
+          {/* Category */}
           <Grid item xs={12}>
             <FormControl fullWidth>
-              <InputLabel>Catagory</InputLabel>
+              <InputLabel>Category</InputLabel>
               <Select
-                label="Catagory"
                 name="Catagory"
                 value={product.Catagory}
+                label="Category"
                 onChange={handleChange}
               >
                 <MenuItem value="Mens">Mens</MenuItem>
                 <MenuItem value="Women">Women</MenuItem>
                 <MenuItem value="Kids">Kids</MenuItem>
-                <MenuItem value="Acessories">Accessories</MenuItem>
+                <MenuItem value="Accessories">Accessories</MenuItem>
               </Select>
             </FormControl>
           </Grid>
 
-          {/* Size Field (enter comma-separated values) */}
-          <Grid item xs={12}>
+          {/* In-stock Size & Color */}
+          <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
-              label="Size "
+              label="Size (in stock, comma-separated)"
               name="size"
               value={product.size}
               onChange={handleChange}
             />
           </Grid>
-          {/* Color Field (enter comma-separated values) */}
-          <Grid item xs={12}>
+          <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
-              label="Color "
+              label="Color (in stock, comma-separated)"
               name="color"
               value={product.color}
               onChange={handleChange}
             />
           </Grid>
-          {/* Quantity Field */}
-          <Grid item xs={12}>
+
+          {/* Out-of-stock Size & Color */}
+          <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
-              label="Quantity"
-              name="quantity"
-              type="number"
-              value={product.quantity}
+              label="Out of Stock Sizes (comma-separated)"
+              name="outSizes"
+              value={product.outSizes}
+              onChange={handleChange}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Out of Stock Colors (comma-separated)"
+              name="outColors"
+              value={product.outColors}
               onChange={handleChange}
             />
           </Grid>
 
-          {/* Brand Field */}
-          <Grid item xs={12}>
+          {/* Quantity & Brand */}
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              type="number"
+              label="Quantity"
+              name="quantity"
+              value={product.quantity}
+              onChange={handleChange}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
               label="Brand"
@@ -203,24 +214,26 @@ const AddProduct = () => {
             />
           </Grid>
 
-          {/* Stock */}
+          {/* Image Upload */}
           <Grid item xs={12}>
-            <FormControl fullWidth>
-              <InputLabel>Stock</InputLabel>
-              <Select
-                label="Stock"
-                name="stock"
-                value={product.stock}
-                onChange={handleChange}
-              >
-                <MenuItem value="In Stock">In Stock</MenuItem>
-                <MenuItem value="Out of Stock">Out of Stock</MenuItem>
-              </Select>
-            </FormControl>
+            <InputLabel>Product Images</InputLabel>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageUpload}
+              style={{ display: "block", marginTop: 8 }}
+            />
+            <Box mt={1} sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+              {product.images.map((img, i) => (
+                <Box key={i} component="img" src={URL.createObjectURL(img)} alt="Preview" width={80} height={80} sx={{ objectFit: "cover" }} />
+              ))}
+            </Box>
           </Grid>
+
           {/* Submit Button */}
           <Grid item xs={12}>
-            <Button type="submit" variant="contained">
+            <Button fullWidth variant="contained" type="submit">
               Add Product
             </Button>
           </Grid>
