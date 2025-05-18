@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { 
-  Container, 
-  Grid, 
-  Card, 
-  CardMedia, 
-  CardContent, 
-  Typography, 
-  Button, 
-  Select, 
-  MenuItem, 
-  FormControl, 
+import {
+  Container,
+  Grid,
+  Card,
+  CardMedia,
+  CardContent,
+  Typography,
+  Button,
+  Select,
+  MenuItem,
+  FormControl,
   InputLabel,
-  CircularProgress
+  CircularProgress,
 } from "@mui/material";
 import "./Product.css";
 import Footer from "./Footer";
@@ -31,18 +31,24 @@ const Product = () => {
   const fetchProducts = async (page, selectedCategory) => {
     setIsLoading(true);
     try {
-      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products`, {
-        params: {
-          page,
-          limit: 16, 
-          category: selectedCategory === "all" ? "All" : selectedCategory,
-        },
-      });
+      const response = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/api/products`,
+        {
+          params: {
+            page,
+            limit: 15,
+            category: selectedCategory === "all" ? "All" : selectedCategory,
+          },
+        }
+      );
       // If we're on the first page, replace products; otherwise, append them.
       if (page === 1) {
         setProducts(response.data.products);
       } else {
-        setProducts((prevProducts) => [...prevProducts, ...response.data.products]);
+        setProducts((prevProducts) => [
+          ...prevProducts,
+          ...response.data.products,
+        ]);
       }
       setCurrentPage(response.data.currentPage);
       setTotalPages(response.data.totalPages);
@@ -85,13 +91,17 @@ const Product = () => {
     <>
       <Container className="mt-8">
         {/* Filter & Sort Controls */}
-        <Grid container spacing={2} sx={{ marginBottom: 3, justifyContent: "end" }}>
+        <Grid
+          container
+          spacing={2}
+          sx={{ marginBottom: 3, justifyContent: "end" }}
+        >
           <Grid item>
             <FormControl variant="outlined" size="small">
               <InputLabel>Category</InputLabel>
-              <Select 
-                value={category} 
-                onChange={(e) => setCategory(e.target.value)} 
+              <Select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
                 label="Category"
               >
                 <MenuItem value="all">All Categories</MenuItem>
@@ -105,9 +115,9 @@ const Product = () => {
           <Grid item>
             <FormControl variant="outlined" size="small">
               <InputLabel>Sort By</InputLabel>
-              <Select 
-                value={sort} 
-                onChange={(e) => setSort(e.target.value)} 
+              <Select
+                value={sort}
+                onChange={(e) => setSort(e.target.value)}
                 label="Sort By"
               >
                 <MenuItem value="default">Sort by Default</MenuItem>
@@ -120,7 +130,12 @@ const Product = () => {
 
         {/* Loading Spinner */}
         {isLoading ? (
-          <Grid container justifyContent="center" alignItems="center" sx={{ minHeight: "80vh" }}>
+          <Grid
+            container
+            justifyContent="center"
+            alignItems="center"
+            sx={{ minHeight: "80vh" }}
+          >
             <CircularProgress />
           </Grid>
         ) : (
@@ -128,44 +143,55 @@ const Product = () => {
             {/* Product List */}
             <Grid container spacing={2}>
               {sortedProducts.map((product, index) => (
-                <Grid 
-                  item 
-                  key={index} 
-                  xs={12} 
-                  sm={6} 
-                  md={4} 
-                  lg={3} 
+                <Grid
+                  item
+                  key={index}
+                  xs={12}
+                  sm={6}
+                  md={4}
+                  lg={3}
                   sx={{ display: "flex", justifyContent: "center" }}
                 >
-                  <Card sx={{ width: "100%", maxWidth: 280, boxShadow: 3, borderRadius: 2 }}>
+                  <Card
+                    sx={{
+                      width: "100%",
+                      maxWidth: 280,
+                      boxShadow: 3,
+                      borderRadius: 2,
+                    }}
+                  >
                     <CardMedia
                       component="img"
                       image={product.images?.[0]}
                       alt={product.name}
-                      sx={{ 
+                      sx={{
                         height: { xs: 180, sm: 200, md: 240 },
-                        objectFit: "contain"
+                        objectFit: "contain",
                       }}
                     />
                     <CardContent>
-                                  <Typography
-    variant="subtitle1"     
-    sx={{
-      fontWeight: 'bold',
-      
-      fontSize: { xs: '12px', sm: '18px' }
-    }}
-  >
-    {product.name}
-  </Typography>
-                      <Typography variant="h6" color="primary" sx={{ marginTop: 1 }}>
+                      <Typography
+                        variant="subtitle1"
+                        sx={{
+                          fontWeight: "bold",
+
+                          fontSize: { xs: "12px", sm: "18px" },
+                        }}
+                      >
+                        {product.name}
+                      </Typography>
+                      <Typography
+                        variant="h6"
+                        color="primary"
+                        sx={{ marginTop: 1 }}
+                      >
                         {product.price} Rs
                       </Typography>
-                      <Button 
-                        variant="contained" 
-                        color="primary" 
-                        fullWidth 
-                        sx={{ marginTop: 2 }} 
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        fullWidth
+                        sx={{ marginTop: 2 }}
                         onClick={() => handleBuyClick(product)}
                       >
                         Buy Now
