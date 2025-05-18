@@ -40,61 +40,63 @@ const upload = multer({
 
 router.post("/products", upload.array("images", 10), async (req, res) => {
   try {
-    const { name, description, price, size, color, quantity, Catagory, brand } = req.body;
+    const {
+      name, description, price,
+      quantity, Catagory, brand
+    } = req.body;
+
     if (!name || !price || !Catagory) {
-      return res.status(400).json({ error: "Name, price and Catagory are required" });
+      return res.status(400).json({ error: "Required fields missing" });
     }
 
-    // Ensure size is always array
-    let parsedSize;
-    if (Array.isArray(size)) {
-      parsedSize = size;
-    } else if (typeof size === "string") {
-      parsedSize = size.split(",").map(s => s.trim()).filter(Boolean);
-    } else {
-      parsedSize = [];
-    }
+    // Parse array fields
+    const parseArr = (field) =>
+      Array.isArray(req.body[field])
+        ? req.body[field]
+        : typeof req.body[field] === "string"
+        ? req.body[field].split(",").map(s => s.trim()).filter(Boolean)
+        : [];
 
-    // Ensure color is always array
-    let parsedColor;
-    if (Array.isArray(color)) {
-      parsedColor = color;
-    } else if (typeof color === "string") {
-      parsedColor = color.split(",").map(c => c.trim()).filter(Boolean);
-    } else {
-      parsedColor = [];
-    }
+    const sizes    = parseArr("size");
+    const colors   = parseArr("color");
+    const outSizes = parseArr("outSizes");
+    const outColors= parseArr("outColors");
 
     // Upload images
-    const uploadPromises = req.files.map(file => {
-      const dataURI = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
-      return cloudinary.uploader.upload(dataURI, { folder: "product_images" });
-    });
-    const results = await Promise.all(uploadPromises);
-    const imageUrls = results.map(r => r.secure_url);
+    const uploads = req.files.map(f =>
+      cloudinary.uploader.upload(
+        `data:${f.mimetype};base64,${f.buffer.toString("base64")}`,
+        { folder: "product_images" }
+      )
+    );
+    const results = await Promise.all(uploads);
+    const images  = results.map(r => r.secure_url);
 
     const product = new ProductModel({
       name,
       description,
       price,
-      size: parsedSize,
-      color: parsedColor,
+      size:       sizes,
+      color:      colors,
+      outSizes,
+      outColors,
       quantity,
       Catagory,
       brand,
-      images: imageUrls,
+      images,
     });
 
     const saved = await product.save();
-    return res.status(201).json({ message: "Product created successfully", product: saved });
+    res.status(201).json({ message: "Created", product: saved });
+
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: err.message || "Internal Server Error" });
+    res.status(500).json({ error: err.message });
   }
 });
 
 // GET /api/products - Fetch products with optional filtering and pagination.
-// GET /api/products - Fetch products with optional filtering and pagination.
+
 router.get("/products", async (req, res) => {
   try {
     const { category, brand, page, limit } = req.query;
