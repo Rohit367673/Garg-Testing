@@ -14,6 +14,8 @@ const productSchema = new mongoose.Schema({
   Catagory: { type: String, required: true },
   brand:{type:String,required:true},
   quantity: { type: Number, required: true },
+    outSizes:    { type: [String], default: [] },
+  outColors:   { type: [String], default: [] },
 
   
 
