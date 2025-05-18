@@ -41,6 +41,12 @@ const ProductDetails = () => {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
 
+  const availableSizes   = product?.size    || [];
+const unavailableSizes = product?.outSizes || [];
+
+const availableColors   = product?.color    ?.map(c => c.trim()) || [];
+const unavailableColors = product?.outColors?.map(c => c.trim()) || [];
+
   // Fetch product details
   useEffect(() => {
     const fetchProduct = async () => {
@@ -308,47 +314,99 @@ const ProductDetails = () => {
 </Typography>
 
 
-      {/* Size Selection */}
-      {product?.size?.length > 0 && (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2, flexWrap: "wrap" }}>
-          <Typography variant="subtitle1">Select Size:</Typography>
-          {product.size.map((size, index) => (
-            <Button
-              key={index}
-              variant={selectedSize === size ? "contained" : "outlined"}
-              size="small"
-              onClick={() => setSelectedSize(size)}
-            >
-              {size.toUpperCase()}
-            </Button>
-          ))}
-        </Box>
-      )}
+     {/* Size Selection */}
+{(availableSizes.length || unavailableSizes.length) > 0 && (
+  <Box sx={{ mb: 2 }}>
+    <Typography variant="subtitle1" gutterBottom>
+      Select Size:
+    </Typography>
+    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+      {availableSizes.map((sz) => (
+        <Button
+          key={sz}
+          size="small"
+          variant={selectedSize === sz ? "contained" : "outlined"}
+          onClick={() => setSelectedSize(sz)}
+        >
+          {sz.toUpperCase()}
+        </Button>
+      ))}
 
-      {/* Color Selection */}
-      {product?.color?.length > 0 && (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2, flexWrap: "wrap" }}>
-          <Typography variant="subtitle1">Select Color:</Typography>
-          {product.color.map((c, idx) => (
-            <Box
-              key={idx}
-              onClick={() => setSelectedColor(c.trim())}
-              sx={{
-                width: 30,
-                height: 30,
-                borderRadius: "50%",
-                backgroundColor: c.trim(),
-                border: selectedColor === c.trim() ? "2px solid #007bff" : "1px solid #ccc",
-                cursor: "pointer",
-                transition: "transform 0.2s",
-                "&:hover": { transform: "scale(1.1)" },
-              }}
-            />
-          ))}
-        </Box>
-      )}
+      {unavailableSizes.map((sz) => (
+        <Button
+          key={sz}
+          size="small"
+          variant="outlined"
+          disabled
+          sx={{
+            color: "#999",
+            textDecoration: "line-through",
+          }}
+        >
+          {sz.toUpperCase()}
+        </Button>
+      ))}
+    </Box>
+  </Box>
+)}
 
-   <Button
+{/* Color Selection */}
+{(availableColors.length || unavailableColors.length) > 0 && (
+  <Box sx={{ mb: 2 }}>
+    <Typography variant="subtitle1" gutterBottom>
+      Select Color:
+    </Typography>
+    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+      {availableColors.map((c) => (
+        <Box
+          key={c}
+          onClick={() => setSelectedColor(c)}
+          sx={{
+            width: 30,
+            height: 30,
+            borderRadius: "50%",
+            backgroundColor: c,
+            border:
+              selectedColor === c
+                ? "2px solid #007bff"
+                : "1px solid #ccc",
+            cursor: "pointer",
+            transition: "transform 0.2s",
+            "&:hover": { transform: "scale(1.1)" },
+          }}
+        />
+      ))}
+
+      {unavailableColors.map((c) => (
+        <Box
+          key={c}
+          sx={{
+            position: "relative",
+            width: 30,
+            height: 30,
+            borderRadius: "50%",
+            backgroundColor: c,
+            opacity: 0.4,
+            border: "1px solid #ccc",
+            cursor: "not-allowed",
+            // a little "slash" to mimic the strikethrough:
+            "&::after": {
+              content: '""',
+              position: "absolute",
+              top: 0,
+              left: "50%",
+              width: "2px",
+              height: "100%",
+              backgroundColor: "#666",
+              transform: "rotate(45deg) translateX(-50%)",
+            },
+          }}
+        />
+      ))}
+    </Box>
+  </Box>
+)}
+<Button
   variant="contained"
   sx={{
     width: "100%",
