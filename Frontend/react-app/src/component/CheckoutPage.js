@@ -28,11 +28,8 @@ const CheckoutPage = () => {
     state: "",
   });
 
-  // Payment & OTP
+  // Payment
   const [paymentMethod, setPaymentMethod] = useState("ONLINE");
-  const [otp, setOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
-  const [phoneVerified, setPhoneVerified] = useState(false);
 
   const codFee = 50; // COD fee if applicable
   const finalTotal = Total + (paymentMethod === "COD" ? codFee : 0);
@@ -46,67 +43,10 @@ const CheckoutPage = () => {
     setAddress((prev) => ({ ...prev, [name]: value }));
   };
 
-  // OTP Send
-  const handleSendOTP = async () => {
-    if (!address.phone) {
-      toast.error("Please enter a phone number.");
-      return;
-    }
-    try {
-      const res = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/otp/send-otp`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone: `+91${address.phone}` }),
-        }
-      );
-      const data = await res.json();
-      if (res.ok) {
-        toast.success("OTP sent successfully!");
-        setOtpSent(true);
-      } else {
-        toast.error(data.error || "Error sending OTP.");
-      }
-    } catch (error) {
-      console.error("Error sending OTP:", error);
-      toast.error("Error sending OTP. Please try again.");
-    }
-  };
-
-  // OTP Verify
-  const handleVerifyOTP = async () => {
-    if (!otp) {
-      toast.error("Please enter the OTP.");
-      return;
-    }
-    try {
-      const res = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/otp/verify-otp`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone: `+91${address.phone}`, code: otp }),
-        }
-      );
-      const data = await res.json();
-      if (res.ok && data.status === "approved") {
-        toast.success("Phone verified successfully!");
-        setPhoneVerified(true);
-      } else {
-        toast.error("Incorrect OTP or verification failed.");
-      }
-    } catch (error) {
-      console.error("Error verifying OTP:", error);
-      toast.error("Error verifying OTP. Please try again.");
-    }
-  };
-
   // Create Order API function
   const createOrder = async (paymentMethodType) => {
     const userId = user.id;
 
-    // Adjust cart items format as needed by your backend API
     const adjustedCartItems = cartItems.map((item) => ({
       productId: item.productId,
       productName: item.productName,
@@ -117,22 +57,13 @@ const CheckoutPage = () => {
       quantity: item.quantity,
     }));
 
-    // Payment method will be "COD" or "Razorpay"
     const payload = {
       userId,
       cartId,
       cartItems: adjustedCartItems,
       totalAmount: paymentMethodType === "COD" ? Total + codFee : Total,
       paymentMethod: paymentMethodType,
-      addressInfo: {
-        name: address.name,
-        email: address.email,
-        phone: address.phone,
-        street: address.street,
-        city: address.city,
-        postalCode: address.postalCode,
-        state: address.state,
-      },
+      addressInfo: { ...address },
     };
 
     const response = await fetch(
@@ -143,19 +74,13 @@ const CheckoutPage = () => {
         body: JSON.stringify(payload),
       }
     );
-    const orderData = await response.json();
-    return orderData;
+    return response.json();
   };
 
   // Cash on Delivery Payment
   const handleCODPayment = async () => {
     if (!user) {
-      alert("User is not logged in!");
       navigate("/login");
-      return;
-    }
-    if (!phoneVerified) {
-      toast.error("Please verify your phone number first.");
       return;
     }
     if (address.phone.length !== 10) {
@@ -165,26 +90,18 @@ const CheckoutPage = () => {
 
     try {
       const orderData = await createOrder("COD");
-      if (!orderData.orderId) {
-        throw new Error("Order creation failed");
-      }
+      if (!orderData.orderId) throw new Error("Order creation failed");
       toast.success("COD order placed successfully!");
-      // Optionally, you can navigate to an order summary page or clear the cart
     } catch (error) {
       toast.error("Error placing COD order. Please try again.");
-      console.error("Error creating COD order:", error);
+      console.error(error);
     }
   };
 
   // Razorpay (Online) Payment
   const handleRazorpayPayment = async () => {
     if (!user) {
-      alert("User is not logged in!");
       navigate("/login");
-      return;
-    }
-    if (!phoneVerified) {
-      toast.error("Please verify your phone number first.");
       return;
     }
     if (address.phone.length !== 10) {
@@ -194,19 +111,16 @@ const CheckoutPage = () => {
 
     try {
       const orderData = await createOrder("Razorpay");
-      if (!orderData.orderId) {
-        throw new Error("Order creation failed");
-      }
+      if (!orderData.orderId) throw new Error("Order creation failed");
 
       const options = {
         key: RAZORPAY_KEY,
-        amount: orderData.amount, // Amount in paise
+        amount: orderData.amount,
         currency: "INR",
         order_id: orderData.orderId,
-        handler: function (response) {
-          alert("Payment successful!");
-          console.log("Payment successful!", response);
-          // Optionally, update order status in your backend here
+        handler: (response) => {
+          toast.success("Payment successful!");
+          console.log("Razorpay response:", response);
         },
         prefill: {
           name: address.name,
@@ -219,21 +133,14 @@ const CheckoutPage = () => {
       const rzp = new window.Razorpay(options);
       rzp.open();
     } catch (error) {
-      alert("Error creating order. Please try again.");
-      console.error("Error creating Razorpay order:", error);
+      toast.error("Error creating order. Please try again.");
+      console.error(error);
     }
   };
 
-  // Submit handler to select the proper flow
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (paymentMethod === "COD") {
-      // For COD, just create order and show success message
-      handleCODPayment();
-    } else if (paymentMethod === "ONLINE") {
-      // For Online Payment, create order then open Razorpay dashboard
-      handleRazorpayPayment();
-    }
+    paymentMethod === "COD" ? handleCODPayment() : handleRazorpayPayment();
   };
 
   return (
@@ -264,30 +171,6 @@ const CheckoutPage = () => {
                   required
                 />
               ))}
-            </div>
-          </div>
-
-          {/* OTP Verification */}
-          <div className="section">
-            <h2 className="mt-4">OTP Verification</h2>
-            <div className="input-container">
-              {!otpSent ? (
-                <button type="button" onClick={handleSendOTP} className="btnC">
-                  SEND OTP
-                </button>
-              ) : (
-                <>
-                  <input
-                    type="text"
-                    placeholder="Enter OTP"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                  />
-                  <button type="button" onClick={handleVerifyOTP} className="btnC">
-                    Verify
-                  </button>
-                </>
-              )}
             </div>
           </div>
 
@@ -342,7 +225,7 @@ const CheckoutPage = () => {
 
           {/* Place Order Button */}
           <div className="section">
-            <button type="submit" className="place-order-btn" disabled={!phoneVerified}>
+            <button type="submit" className="place-order-btn">
               Place Order
             </button>
           </div>
