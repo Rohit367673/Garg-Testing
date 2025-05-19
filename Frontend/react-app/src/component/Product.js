@@ -36,7 +36,7 @@ const Product = () => {
         {
           params: {
             page,
-            limit: 15,
+            limit: 16,
             category: selectedCategory === "all" ? "All" : selectedCategory,
           },
         }
