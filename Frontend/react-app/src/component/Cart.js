@@ -1,3 +1,5 @@
+// src/component/Cart.js
+
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
@@ -14,7 +16,13 @@ import {
   Button,
   IconButton,
   Divider,
+  Paper,
+  Select,
+  MenuItem,
+  Link,
+  useMediaQuery,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import DeleteIcon from "@mui/icons-material/Delete";
 import Footer from "./Footer";
 import axios from "axios";
@@ -26,18 +34,19 @@ const Cart = () => {
   const navigate = useNavigate();
   const { cartItems, subTotal, Total } = useSelector((state) => state.cart);
 
+  // Recalculate price any time cartItems changes
   useEffect(() => {
     dispatch(calculatePrice());
   }, [cartItems, dispatch]);
 
-  // Fetch some products (not based on category)
+  // Fetch related products (limit 4)
   useEffect(() => {
     const fetchRelatedProducts = async () => {
       try {
         const response = await axios.get(
           `${process.env.REACT_APP_BACKEND_URL}/api/products?limit=4`
         );
-        setRelatedProducts(response.data.products || []);
+        setRelatedProducts(response.data.products || response.data || []);
       } catch (error) {
         console.error("Error fetching related products:", error.message);
       }
@@ -45,6 +54,7 @@ const Cart = () => {
     fetchRelatedProducts();
   }, []);
 
+  // Handlers
   const handleDelete = (id, selectedSize, selectedColor) => {
     dispatch(deleteCart({ id, selectedSize, selectedColor }));
   };
@@ -53,18 +63,37 @@ const Cart = () => {
     dispatch(decrement({ id, selectedSize, selectedColor }));
   };
 
-  // Updated handleIncrement function to check current quantity
   const handleIncrement = (id, selectedSize, selectedColor) => {
     const item = cartItems.find(
-      (item) =>
-        item.id === id &&
-        item.selectedSize === selectedSize &&
-        item.selectedColor === selectedColor
+      (it) =>
+        it.id === id &&
+        it.selectedSize === selectedSize &&
+        it.selectedColor === selectedColor
     );
     if (item && item.quantity < 2) {
       dispatch(increment({ id, selectedSize, selectedColor }));
     } else {
       toast.error("Maximum quantity reached!");
+    }
+  };
+
+  const handleQtyChange = (e, id, selectedSize, selectedColor) => {
+    const newQty = parseInt(e.target.value, 10);
+    const item = cartItems.find(
+      (it) =>
+        it.id === id &&
+        it.selectedSize === selectedSize &&
+        it.selectedColor === selectedColor
+    );
+    if (!item) return;
+    if (newQty > item.quantity) {
+      for (let i = item.quantity; i < newQty; i++) {
+        handleIncrement(id, selectedSize, selectedColor);
+      }
+    } else if (newQty < item.quantity) {
+      for (let i = item.quantity; i > newQty; i--) {
+        handleDecrement(id, selectedSize, selectedColor);
+      }
     }
   };
 
@@ -80,235 +109,400 @@ const Cart = () => {
     navigate(`/product/${relatedProductId}`);
   };
 
+  // Check mobile
+  const theme = useTheme();
+  const isXs = useMediaQuery(theme.breakpoints.down("sm"));
+
   return (
     <>
       <Box
         sx={{
-          padding: { xs: 2, md: 4 },
-          backgroundColor: "#f8f8f8",
+          backgroundColor: "#f2f2f2",
           minHeight: "100vh",
+          pb: isXs ? "80px" : 0, 
+          px: { xs: 0, sm: 2, md: 4 },        // ← Remove horizontal padding on xs
         }}
       >
-        <Typography
-          variant="h4"
-          gutterBottom
-          textAlign="center"
-          color="text.primary"
-          sx={{ fontWeight: "bold", mb: 3 }}
-        >
-          Cart
-        </Typography>
-
-        {cartItems.length === 0 ? (
-          <Typography variant="h6" color="text.secondary" textAlign="center">
-            Your cart is empty.
+        <Box sx={{ pt: { xs: 1, sm: 2, md: 4 } }}>
+          {/* Page Heading */}
+          <Typography
+            variant="h5"
+            gutterBottom
+            textAlign="center"
+            sx={{ fontWeight: 700, mb: 2 }}
+          >
+            Shopping Cart
           </Typography>
-        ) : (
-          <Grid container spacing={3}>
-            {/* Cart Items Section */}
-            <Grid item xs={12} md={8}>
-              {cartItems.map((item) => (
-                <Box
-                  key={`${item.id}-${item.selectedSize}-${item.selectedColor}`}
-                  sx={{
-                    display: "flex",
-                    flexDirection: { xs: "column", sm: "row" },
-                    alignItems: "center",
-                    backgroundColor: "white",
-                    padding: 2,
-                    marginBottom: 2,
-                    borderRadius: 2,
-                    boxShadow: 2,
-                  }}
-                >
-                  <Box
-                    component="img"
-                    src={item.imgsrc}
-                    alt={item.name}
+
+          {cartItems.length === 0 ? (
+            <Typography
+              variant="h6"
+              color="text.secondary"
+              textAlign="center"
+              sx={{ mt: 4 }}
+            >
+              Your Cart is Empty
+            </Typography>
+          ) : (
+            <Grid container spacing={2}>
+              {/* ===== Cart Items (takes full width on xs, 8/12 on md+) ===== */}
+              <Grid item xs={12} md={8}>
+                {cartItems.map((item) => {
+                  const key = `${item.id}-${item.selectedSize}-${item.selectedColor}`;
+                  return (
+                    <Paper
+                      key={key}
+                      elevation={1}
+                      sx={{
+                        width: { xs: "200%", sm: "100%" },
+                        display: "flex",
+                        flexDirection: "row",            // ← Always row: image on left, details on right
+                        bgcolor: "#fff",
+                        borderRadius: 1,
+                        p: 2,
+                        mb: 2,
+                        
+                      }}
+                    >
+                      {/* LEFT: Product Image (fixed 100×100) */}
+                      <Box
+                        component="img"
+                        src={item.imgsrc}
+                        alt={item.productName}
+                        sx={{
+                          width: 100,
+                          height: 100,
+                          objectFit: "contain",
+                          mr: 2,
+                        }}
+                      />
+
+                      {/* RIGHT: Details & Actions in a vertical stack */}
+                      <Box
+                        sx={{
+                          flexGrow: 1,
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        {/* Top: Name + Seller */}
+                        <Box>
+                          <Typography
+                            variant="subtitle1"
+                            sx={{ fontWeight: 600, lineHeight: 1.2 }}
+                          >
+                            {item.productName}
+                          </Typography>
+                 
+                        </Box>
+
+                        {/* Middle: Price, Size, Color Circle */}
+                        <Box sx={{ mt: 1 }}>
+                          <Typography
+                            variant="body1"
+                            sx={{ fontWeight: 600, mb: 0.5 }}
+                          >
+                            ₹{item.price}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ mb: 0.5 }}
+                          >
+                            Size: {item.selectedSize}
+                          </Typography>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                            }}
+                          >
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                            >
+                              Color:
+                            </Typography>
+                            <Box
+                              sx={{
+                                width: 16,
+                                height: 16,
+                                borderRadius: "50%",
+                                backgroundColor: item.selectedColor,
+                                border: "1px solid #ccc",
+                              }}
+                            />
+                          </Box>
+                        </Box>
+
+                        {/* Bottom: Qty + Delete/Save */}
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            mt: 1,
+                          }}
+                        >
+                          {/* Quantity Dropdown */}
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                            }}
+                          >
+                            <Typography variant="body2">Qty:</Typography>
+                            <Select
+                              size="small"
+                              value={item.quantity}
+                              onChange={(e) =>
+                                handleQtyChange(
+                                  e,
+                                  item.id,
+                                  item.selectedSize,
+                                  item.selectedColor
+                                )
+                              }
+                              sx={{
+                                width: 60,
+                                height: 32,
+                                fontSize: "0.9rem",
+                              }}
+                            >
+                              {[1, 2, 3, 4, 5].map((qty) => (
+                                <MenuItem key={qty} value={qty}>
+                                  {qty}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </Box>
+
+                          {/* Delete & Save Links */}
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 2,
+                            }}
+                          >
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() =>
+                                handleDelete(
+                                  item.id,
+                                  item.selectedSize,
+                                  item.selectedColor
+                                )
+                              }
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                       
+                          </Box>
+                        </Box>
+                      </Box>
+                    </Paper>
+                  );
+                })}
+              </Grid>
+
+              {/* ===== Summary (4-column on md+, hidden on xs) ===== */}
+              <Grid item xs={12} md={4}>
+                {!isXs && (
+                  <Paper
+                    elevation={1}
                     sx={{
-                      width: { xs: 100, sm: 120 },
-                      height: "auto",
-                      borderRadius: 2,
-                      marginRight: { xs: 0, sm: 2 },
-                      marginBottom: { xs: 2, sm: 0 },
-                      objectFit: "cover",
+                      bgcolor: "#fff",
+                      p: 3,
+                      borderRadius: 1,
+                      position: "sticky",
+                      top: 16,
                     }}
-                  />
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="h6" color="text.primary">
-                      {item.productName}
-                    </Typography>
-                    <Typography variant="body1" color="text.primary">
-                      {item.name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Price: ₹{item.price}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Size: {item.selectedSize} | Color: {item.selectedColor}
+                  >
+                    <Typography
+                      variant="subtitle1"
+                      sx={{ fontWeight: 700, mb: 2 }}
+                    >
+                      Order Summary
                     </Typography>
                     <Box
                       sx={{
                         display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        marginTop: 1,
+                        justifyContent: "space-between",
+                        mb: 1,
                       }}
                     >
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={() =>
-                          handleDecrement(
-                            item.id,
-                            item.selectedSize,
-                            item.selectedColor
-                          )
-                        }
-                      >
-                        -
-                      </Button>
-                      <Typography variant="body1">{item.quantity}</Typography>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={() =>
-                          handleIncrement(
-                            item.id,
-                            item.selectedSize,
-                            item.selectedColor
-                          )
-                        }
-                        disabled={item.quantity >= 2}
-                      >
-                        +
-                      </Button>
+                      <Typography variant="body2">Subtotal</Typography>
+                      <Typography variant="body2">₹{subTotal}</Typography>
                     </Box>
-                    <IconButton
-                      color="error"
-                      onClick={() =>
-                        handleDelete(item.id, item.selectedSize, item.selectedColor)
-                      }
-                      sx={{ marginTop: 1 }}
+                    <Divider sx={{ mb: 1 }} />
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        mb: 2,
+                      }}
                     >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Box>
-                </Box>
-              ))}
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                        Total
+                      </Typography>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                        ₹{Total}
+                      </Typography>
+                    </Box>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      fullWidth
+                      sx={{
+                        py: 1.5,
+                        textTransform: "none",
+                        fontWeight: 600,
+                      }}
+                      onClick={handleCheckout}
+                    >
+                      Proceed to Buy
+                    </Button>
+                  </Paper>
+                )}
+              </Grid>
             </Grid>
+          )}
 
-            {/* Summary Section */}
-            <Grid item xs={12} md={4}>
-              <Box
-                sx={{
-                  backgroundColor: "white",
-                  padding: 3,
-                  borderRadius: 2,
-                  boxShadow: 2,
-                  textAlign: "center",
-                }}
-              >
-                <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
-                  Summary
+          {/* ===== Discover More Products ===== */}
+          <Box sx={{ mt: 4, px: { xs: 0, sm: 2, md: 4 } }}>
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 600, mb: 1 }}
+            >
+              Discover More Products
+            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                overflowX: "auto",
+                gap: 1,
+                py: 1,
+              }}
+            >
+              {relatedProducts.length === 0 ? (
+                <Typography variant="body2">
+                  Loading related products...
                 </Typography>
-                <Typography variant="body1" color="text.primary">
-                  Subtotal: ₹{subTotal}
-                </Typography>
-                <Divider sx={{ my: 2 }} />
-                <Typography variant="h6" color="text.primary">
-                  Total: ₹{Total}
-                </Typography>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  sx={{ marginTop: 3, width: "100%" }}
-                  onClick={handleCheckout}
-                >
-                  Proceed to Checkout
-                </Button>
-              </Box>
-            </Grid>
-          </Grid>
-        )}
+              ) : (
+                relatedProducts.map((prod) => (
+                  <Paper
+                    key={prod._id || prod.id}
+                    elevation={1}
+                    sx={{
+                      flexShrink: 0,
+                      width: 160,
+                      borderRadius: 1,
+                      p: 1,
+                      cursor: "pointer",
+                      transition: "transform 0.2s ease",
+                      "&:hover": { transform: "scale(1.05)" },
+                    }}
+                    onClick={() =>
+                      handleRelatedProductClick(prod._id || prod.id)
+                    }
+                  >
+                    <Box
+                      component="img"
+                      src={prod.images?.[0] || "placeholder.jpg"}
+                      alt={prod.name}
+                      sx={{
+                        width: "100%",
+                        height: 120,
+                        objectFit: "contain",
+                        mb: 0.5,
+                      }}
+                    />
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontWeight: 500,
+                        lineHeight: 1.2,
+                        mb: 0.5,
+                      }}
+                      noWrap
+                    >
+                      {prod.name}
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      ₹{prod.price}
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      fullWidth
+                      sx={{
+                        mt: 0.5,
+                        textTransform: "none",
+                        fontSize: "0.75rem",
+                      }}
+                    >
+                      View
+                    </Button>
+                  </Paper>
+                ))
+              )}
+            </Box>
+          </Box>
+        </Box>
 
-        {/* Discover Other Products Section */}
-        <Box sx={{ mt: 4 }}>
-          <Typography variant="h5" sx={{ mb: 2 }}>
-            Discover More Products
-          </Typography>
-          <Box
+        {/* ===== Mobile Sticky Summary ===== */}
+        {cartItems.length > 0 && isXs && (
+          <Paper
+            elevation={4}
             sx={{
-              display: "flex",
-              overflowX: "auto",
-              gap: 2,
+              position: "fixed",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              bgcolor: "#fff",
+              borderTop: "1px solid #ddd",
+              px: 2,
               py: 1,
             }}
           >
-            {relatedProducts.length === 0 ? (
-              <Typography>Loading related products...</Typography>
-            ) : (
-              relatedProducts.map((item) => (
-                <Box
-                  key={item._id || item.id}
-                  sx={{
-                    flexShrink: 0,
-                    width: 200,
-                    p: 1,
-                    borderRadius: 2,
-                    boxShadow: 2,
-                    cursor: "pointer",
-                    transition: "transform 0.3s ease",
-                    "&:hover": { transform: "scale(1.05)" },
-                  }}
-                  onClick={() =>
-                    handleRelatedProductClick(item._id || item.id)
-                  }
-                >
-                  <Box
-                    component="img"
-                    src={
-                      item.images?.[0]
-                        ? item.images[0]
-                        : "placeholder.jpg"
-                    }
-                    alt={item.name}
-                    sx={{
-                      width: "100%",
-                      height: 150,
-                      borderRadius: 1,
-                      objectFit: "contain",
-                    }}
-                  />
-                  <Typography
-                    variant="body2"
-                    sx={{ mt: 1, textAlign: "center" }}
-                  >
-                    {item.name}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{ textAlign: "center", color: "#333" }}
-                  >
-                    ₹{item.price}
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    sx={{
-                      width: "100%",
-                      mt: 1,
-                      backgroundColor: "#007bff",
-                      "&:hover": { backgroundColor: "#ff6347" },
-                    }}
-                  >
-                    Show Product
-                  </Button>
-                </Box>
-              ))
-            )}
-          </Box>
-        </Box>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  Subtotal: ₹{subTotal}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  ({cartItems.reduce((sum, it) => sum + it.quantity, 0)} items)
+                </Typography>
+              </Box>
+              <Button
+                variant="contained"
+                color="primary"
+                sx={{
+                  textTransform: "none",
+                  fontSize: "0.9rem",
+                  ml: 1,
+                }}
+                onClick={handleCheckout}
+              >
+                Proceed to Buy
+              </Button>
+            </Box>
+          </Paper>
+        )}
       </Box>
+
+      {/* Footer */}
       <Footer />
     </>
   );
