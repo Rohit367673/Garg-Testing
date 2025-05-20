@@ -9,8 +9,7 @@ import SearchRecommendation from "./SearchRecommendation";
 
 function Header() {
   const { user } = useContext(AuthContext);
-  const cartItems = useSelector((state) => state.cart.cartItems);
-  const [loading, setLoading] = useState(true);
+  const cartItems = useSelector((s) => s.cart.cartItems);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -21,11 +20,6 @@ function Header() {
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const toggleProfile = () => setIsProfileOpen(!isProfileOpen);
-
-  useEffect(() => {
-    // Remove artificial delay
-    setLoading(false);
-  }, []);
 
   // Close dropdown if clicking outside the search container
   useEffect(() => {
@@ -64,23 +58,37 @@ function Header() {
   };
 
   const handleSelectProduct = (product) => {
-    console.log("Selected product:", product);
-    navigate(`/product/${product.id || product._id}`);
+    if (product.isViewAll) {
+      navigate(`/product?query=${encodeURIComponent(searchQuery)}`);
+    } else {
+      const productId = product._id || product.id;
+      if (productId) {
+        navigate(`/product/${productId}`);
+      } else {
+        navigate(`/product?query=${encodeURIComponent(searchQuery)}`);
+      }
+    }
     setSearchQuery("");
     setShowDropdown(false);
   };
 
-  if (loading) return null;
+  const handleSearchSubmit = (e) => {
+    if (e.key === "Enter" && searchQuery.trim()) {
+      navigate(`/product?query=${encodeURIComponent(searchQuery)}`);
+      setSearchQuery("");
+      setShowDropdown(false);
+      e.preventDefault();
+    }
+  };
 
   return (
     <header className="nav">
       <div className="nav-left">
         <Link to="/">
-          <img src="./Images/Logo2.png" alt="Logo" className="logo" />
+          <img src="/Images/Logo2.png" alt="Logo" className="logo" />
         </Link>
       </div>
 
-      {/* Navigation Menu */}
       <nav className={`menu ${isMenuOpen ? "open" : ""}`}>
         <ul className="menu-list">
           <li>
@@ -89,8 +97,8 @@ function Header() {
             </NavLink>
           </li>
           <li>
-            <NavLink to="/Product" className={({ isActive }) => (isActive ? "active" : "")}>
-              Product
+            <NavLink to="/product" className={({ isActive }) => (isActive ? "active" : "")}>
+              Products
             </NavLink>
           </li>
           <li>
@@ -109,22 +117,25 @@ function Header() {
         </ul>
       </nav>
 
-      {/* Right Section (Search, Login/Profile, and Mobile Toggle) */}
       <div className="nav-right">
-        <div className="search-container">
+        <div className="search-container" ref={searchInputRef}>
           <input
-            ref={searchInputRef}
             type="search"
-            placeholder="Search..."
+            placeholder="Search products..."
             value={searchQuery}
             onChange={handleSearchChange}
+            onKeyDown={handleSearchSubmit}
             onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
           />
           <SearchRecommendation
             anchorEl={searchInputRef.current}
-            recommendedProducts={searchResults}
+            recommendedProducts={[
+              ...searchResults,
+              { id: "__view_all__", name: `View all results for "${searchQuery}"`, isViewAll: true }
+            ]}
             open={showDropdown}
             onSelectProduct={handleSelectProduct}
+            searchQuery={searchQuery}
           />
         </div>
 

@@ -216,4 +216,28 @@ router.get("/recommended-products", async (req, res) => {
   }
 });
 
+// Search endpoint
+router.get("/products/search", async (req, res) => {
+  try {
+    const { query } = req.query;
+    const results = await ProductModel
+      .find({ $text: { $search: query } }, { score: { $meta: "textScore" } })
+      .sort({ score: { $meta: "textScore" } })
+      .limit(10)
+      .lean();
+
+    // Format the results to include both _id and id
+    const formattedResults = results.map(product => ({
+      ...product,
+      id: product._id.toString(),
+      _id: product._id.toString()
+    }));
+
+    res.json(formattedResults);
+  } catch (error) {
+    console.error("Error in search:", error);
+    res.status(500).json({ message: "Error performing search" });
+  }
+});
+
 export default router;

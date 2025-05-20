@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import {
   Container,
@@ -19,6 +19,8 @@ import "./Product.css";
 import Footer from "./Footer";
 
 const Product = () => {
+  const [searchParams] = useSearchParams();
+  const query = searchParams.get("query") || "";
   const [products, setProducts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -27,60 +29,62 @@ const Product = () => {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Function to fetch products based on current page and selected category
-  const fetchProducts = async (page, selectedCategory) => {
+  const fetchProducts = useCallback(async (page = 1, selectedCategory = category) => {
     setIsLoading(true);
     try {
-      const response = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/products`,
-        {
-          params: {
-            page,
-            limit: 16,
-            category: selectedCategory === "all" ? "All" : selectedCategory,
-          },
-        }
-      );
-      // If we're on the first page, replace products; otherwise, append them.
-      if (page === 1) {
-        setProducts(response.data.products);
+      let response;
+      if (query.trim()) {
+        response = await axios.get(
+          `${process.env.REACT_APP_BACKEND_URL}/products/search`,
+          { params: { query: query.trim() } }
+        );
+        setProducts(response.data);
+        setCurrentPage(1);
+        setTotalPages(1);
       } else {
-        setProducts((prevProducts) => [
-          ...prevProducts,
-          ...response.data.products,
-        ]);
+        response = await axios.get(
+          `${process.env.REACT_APP_BACKEND_URL}/api/products`,
+          {
+            params: {
+              page,
+              limit: 16,
+              category: selectedCategory === "all" ? "All" : selectedCategory,
+            },
+          }
+        );
+        if (page === 1) {
+          setProducts(response.data.products);
+        } else {
+          setProducts((prevProducts) => [...prevProducts, ...response.data.products]);
+        }
+        setCurrentPage(response.data.currentPage);
+        setTotalPages(response.data.totalPages);
       }
-      setCurrentPage(response.data.currentPage);
-      setTotalPages(response.data.totalPages);
     } catch (error) {
       console.error("Error fetching products:", error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [category, query]);
 
-  // Fetch products on initial render and when category changes
   useEffect(() => {
     fetchProducts(1, category);
-  }, [category]);
+  }, [category, query, fetchProducts]);
 
-  // Function to load more products
   const loadMore = () => {
     if (currentPage < totalPages) {
       fetchProducts(currentPage + 1, category);
     }
   };
 
-  // Function for handling the "Buy Now" button
   const handleBuyClick = (product) => {
-    if (product && product._id) {
-      navigate(`/product/${product._id}`);
+    if (product && (product._id || product.id)) {
+      navigate(`/product/${product._id || product.id}`);
     } else {
       console.error("Product ID is not valid:", product);
     }
   };
 
-  // Sorting the products if needed
   const sortedProducts = [...products].sort((a, b) => {
     if (sort === "price-low") return a.price - b.price;
     if (sort === "price-high") return b.price - a.price;
@@ -90,28 +94,25 @@ const Product = () => {
   return (
     <>
       <Container className="mt-8">
-        {/* Filter & Sort Controls */}
-        <Grid
-          container
-          spacing={2}
-          sx={{ marginBottom: 3, justifyContent: "end" }}
-        >
-          <Grid item>
-            <FormControl variant="outlined" size="small">
-              <InputLabel>Category</InputLabel>
-              <Select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                label="Category"
-              >
-                <MenuItem value="all">All Categories</MenuItem>
-                <MenuItem value="Mens">Mens</MenuItem>
-                <MenuItem value="Women">Women</MenuItem>
-                <MenuItem value="Kids">Kids</MenuItem>
-                <MenuItem value="Accessories">Accessories</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
+        <Grid container spacing={2} sx={{ marginBottom: 3, justifyContent: "end" }}>
+          {!query.trim() && (
+            <Grid item>
+              <FormControl variant="outlined" size="small">
+                <InputLabel>Category</InputLabel>
+                <Select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  label="Category"
+                >
+                  <MenuItem value="all">All Categories</MenuItem>
+                  <MenuItem value="Mens">Mens</MenuItem>
+                  <MenuItem value="Women">Women</MenuItem>
+                  <MenuItem value="Kids">Kids</MenuItem>
+                  <MenuItem value="Accessories">Accessories</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          )}
           <Grid item>
             <FormControl variant="outlined" size="small">
               <InputLabel>Sort By</InputLabel>
@@ -128,19 +129,12 @@ const Product = () => {
           </Grid>
         </Grid>
 
-        {/* Loading Spinner */}
         {isLoading ? (
-          <Grid
-            container
-            justifyContent="center"
-            alignItems="center"
-            sx={{ minHeight: "80vh" }}
-          >
+          <Grid container justifyContent="center" alignItems="center" sx={{ minHeight: "80vh" }}>
             <CircularProgress />
           </Grid>
         ) : (
           <>
-            {/* Product List */}
             <Grid container spacing={2}>
               {sortedProducts.map((product, index) => (
                 <Grid
@@ -174,7 +168,6 @@ const Product = () => {
                         variant="subtitle1"
                         sx={{
                           fontWeight: "bold",
-
                           fontSize: { xs: "12px", sm: "18px" },
                         }}
                       >
@@ -202,8 +195,7 @@ const Product = () => {
               ))}
             </Grid>
 
-            {/* Load More Button */}
-            {currentPage < totalPages && (
+            {!query.trim() && currentPage < totalPages && (
               <Grid container justifyContent="center" sx={{ marginTop: 3 }}>
                 <Button variant="outlined" onClick={loadMore}>
                   Load More

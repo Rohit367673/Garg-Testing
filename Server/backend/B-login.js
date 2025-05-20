@@ -21,8 +21,7 @@ import crypto from "crypto";
 import admin from "firebase-admin";
 import ReviewsModel from "./Models/Reviews.js";
 import OrderRoute from "./route/OrderHistoryRoute.js"
-import TwilioRoute from "./route/TwilioRoute.js"
-import twilioOtpRouter from "./route/TwilioOtp.js"
+
 import EmailOtp from "./route/EmailOtp.js"
 dotenv.config();
 
@@ -56,8 +55,7 @@ app.use(
 app.use("/api", productRoutes);
 app.use("/api", sliderRoute);
 app.use("/api/orders",OrderRoute);
-app.use("/api/whatsapp",TwilioRoute);
-app.use("/api/otp", twilioOtpRouter);
+
 app.use("/api/otp",EmailOtp)
 
 mongoose
@@ -500,51 +498,24 @@ app.post("/google-signup", async (req, res) => {
 
 // In your server.js (or productRoutes.js)
 app.get("/products/search", async (req, res) => {
-  try {
-    const { query } = req.query;
-    // console.log("Search query received:", query);
-    if (!query) {
-      return res.status(400).json({ error: "Search query is required" });
-    }
-  
-    const products = await ProductModel.find({
-      name: { $regex: query, $options: "i" }
-    });
-
-    if (products.length === 0) {
-
-      return res.status(404).json({ message: "No products found" });
-    }
-    
-    const formattedProducts = products.map(product => ({
-      id: product._id.toString(),
-      name: product.name,
-      price: product.price,
-      images: product.images,
-      quantity: product.quantity,
-      category: product.category,
-    }));
-    res.status(200).json(formattedProducts);
-  } catch (error) {
-    console.error("Error searching products:", error);
-    res.status(500).json({ error: "Error searching products", details: error.message });
-  }
+  const { query } = req.query;
+  const results = await ProductModel
+    .find({ $text: { $search: query } }, { score: { $meta: "textScore" } })
+    .sort({ score: { $meta: "textScore" } })
+    .limit(10);
+  res.json(results);
 });
 
 // Optional: Recommendation endpoint based on category
 app.get("/products/recommend", async (req, res) => {
-  try {
-    const { category } = req.query;
-    if (!category) {
-      return res.status(400).json({ error: "Category is required for recommendations" });
-    }
-    const recommendedProducts = await ProductModel.find({ category }).limit(5);
-    res.status(200).json(recommendedProducts);
-  } catch (error) {
-    console.error("Error fetching recommendations:", error);
-    res.status(500).json({ error: "Error fetching recommendations", details: error.message });
-  }
+  const { category } = req.query;
+  const recs = await ProductModel
+    .find({ category })
+    .sort({ soldCount: -1 })
+    .limit(5);
+  res.json(recs);
 });
+
 
 
 
