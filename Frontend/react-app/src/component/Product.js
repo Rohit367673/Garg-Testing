@@ -36,9 +36,17 @@ const Product = () => {
       if (query.trim()) {
         response = await axios.get(
           `${process.env.REACT_APP_BACKEND_URL}/products/search`,
-          { params: { query: query.trim() } }
+          { 
+            params: { 
+              query: query.trim(),
+              category: selectedCategory === "all" ? undefined : selectedCategory
+            } 
+          }
         );
-        setProducts(response.data);
+        const filteredProducts = selectedCategory === "all" 
+          ? response.data 
+          : response.data.filter(product => product.Catagory === selectedCategory);
+        setProducts(filteredProducts);
         setCurrentPage(1);
         setTotalPages(1);
       } else {
@@ -95,24 +103,21 @@ const Product = () => {
     <>
       <Container className="mt-8">
         <Grid container spacing={2} sx={{ marginBottom: 3, justifyContent: "end" }}>
-          {!query.trim() && (
-            <Grid item>
-              <FormControl variant="outlined" size="small">
-                <InputLabel>Category</InputLabel>
-                <Select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  label="Category"
-                >
-                  <MenuItem value="all">All Categories</MenuItem>
-                  <MenuItem value="Mens">Mens</MenuItem>
-                  <MenuItem value="Women">Women</MenuItem>
-                  <MenuItem value="Kids">Kids</MenuItem>
-                  <MenuItem value="Accessories">Accessories</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-          )}
+          <Grid item>
+            <FormControl variant="outlined" size="small">
+              <InputLabel>Category</InputLabel>
+              <Select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                label="Category"
+              >
+                <MenuItem value="all">All Categories</MenuItem>
+                <MenuItem value="Mens">Mens</MenuItem>
+                <MenuItem value="Women">Women</MenuItem>
+                <MenuItem value="Kids">Kids</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
           <Grid item>
             <FormControl variant="outlined" size="small">
               <InputLabel>Sort By</InputLabel>
