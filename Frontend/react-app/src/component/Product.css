@@ -191,3 +191,26 @@
   font-weight: 500;
   padding: 8px 24px;
 }
+
+/* Filter section styles */
+.MuiFormControl-root {
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 600px) {
+  .product-page {
+    padding: 10px;
+  }
+
+  .MuiFormControl-root {
+    margin-bottom: 0.5rem;
+  }
+
+  .MuiGrid-container {
+    margin-bottom: 1rem !important;
+  }
+
+  .MuiSelect-select {
+    padding: 8px 14px !important;
+  }
+}
