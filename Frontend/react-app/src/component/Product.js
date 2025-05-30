@@ -1,264 +1,319 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import axios from "axios";
-import {
-  Container,
-  Grid,
-  Card,
-  CardMedia,
-  CardContent,
-  Typography,
-  Button,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  CircularProgress,
-} from "@mui/material";
-import "./Product.css";
-import Footer from "./Footer";
+import express from "express";
+import multer from "multer";
+import ProductModel from "../Models/Product.js";
+import mongoose from "mongoose";
+import { v2 as cloudinary } from "cloudinary";
+import dotenv from "dotenv";
+import jwt from "jsonwebtoken";
+dotenv.config();
 
-const Product = () => {
-  const [searchParams] = useSearchParams();
-  const query = searchParams.get("query") || "";
-  const [products, setProducts] = useState([]);
-  const [popularProducts, setPopularProducts] = useState([]);
-  const [searchMessage, setSearchMessage] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [category, setCategory] = useState("all");
-  const [productType, setProductType] = useState("all");
-  const [sort, setSort] = useState("default");
-  const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
+const router = express.Router();
 
-  const fetchProducts = useCallback(
-    async (page = 1, selectedCategory = category, selectedType = productType) => {
-      setIsLoading(true);
-      try {
-        let response;
+// Authentication middleware
+const authenticateToken = (req, res, next) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
 
-        if (query.trim()) {
-          response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/products/search`, {
-            params: {
-              query: query.trim(),
-              category: selectedCategory === "all" ? undefined : selectedCategory,
-              productType: selectedType === "all" ? undefined : selectedType,
-            },
-          });
+    if (!token) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
 
-          setProducts(Array.isArray(response.data) ? response.data : []);
-          setPopularProducts([]);
-          setSearchMessage(null);
-          setCurrentPage(1);
-          setTotalPages(1);
-        } else {
-          // Build filter params
-          const params = {
-            page,
-            limit: 16
-          };
-
-          // Only add filters if they are not "all"
-          if (selectedCategory !== "all") {
-            params.category = selectedCategory;
-          }
-          if (selectedType !== "all") {
-            params.productType = selectedType;
-          }
-
-          console.log('Sending filter params:', {
-            category: selectedCategory,
-            productType: selectedType,
-            params
-          });
-
-          response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products`, {
-            params,
-          });
-
-          console.log('Received products:', response.data.products.length);
-
-          if (page === 1) {
-            setProducts(response.data.products);
-          } else {
-            setProducts((prev) => [...prev, ...response.data.products]);
-          }
-          setCurrentPage(response.data.currentPage);
-          setTotalPages(response.data.totalPages);
-          setPopularProducts([]);
-          setSearchMessage(null);
-        }
-      } catch (error) {
-        console.error("Error fetching products:", error);
-        setProducts([]);
-        setSearchMessage("Error loading products. Please try again.");
-      } finally {
-        setIsLoading(false);
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+      if (err) {
+        console.error("Token verification error:", err);
+        return res.status(403).json({ message: "Invalid or expired token" });
       }
-    },
-    [category, productType, query]
-  );
-
-  // Reset products when filters change
-  useEffect(() => {
-    setProducts([]);
-    setCurrentPage(1);
-    fetchProducts(1, category, productType);
-  }, [category, productType, query, fetchProducts]);
-
-  // Add effect to log filter changes
-  useEffect(() => {
-    console.log('Filter state changed:', { category, productType });
-  }, [category, productType]);
-
-  const loadMore = () => {
-    if (currentPage < totalPages) {
-      fetchProducts(currentPage + 1, category, productType);
-    }
-  };
-
-  const handleBuyClick = (product) => {
-    if (product && (product._id || product.id)) {
-      navigate(`/product/${product._id || product.id}`);
-    } else {
-      console.error("Invalid Product ID:", product);
-    }
-  };
-
-  const sortedProducts = [...products].sort((a, b) => {
-    if (sort === "price-low") return a.price - b.price;
-    if (sort === "price-high") return b.price - a.price;
-    return 0;
-  });
-
-  return (
-    <>
-      <Container className="mt-8">
-        <Grid container spacing={2} sx={{ marginBottom: 3, justifyContent: "end" }}>
-          <Grid item>
-            <FormControl variant="outlined" size="small">
-              <InputLabel>Category</InputLabel>
-              <Select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                label="Category"
-              >
-                <MenuItem value="all">All Categories</MenuItem>
-                <MenuItem value="Mens">Mens</MenuItem>
-                <MenuItem value="Women">Women</MenuItem>
-                <MenuItem value="Kids">Kids</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-
-          <Grid item>
-            <FormControl variant="outlined" size="small">
-              <InputLabel>Product Type</InputLabel>
-              <Select
-                value={productType}
-                onChange={(e) => setProductType(e.target.value)}
-                label="Product Type"
-              >
-                <MenuItem value="all">All Types</MenuItem>
-                <MenuItem value="Casual">Casual</MenuItem>
-                <MenuItem value="Formal">Formal</MenuItem>
-                <MenuItem value="Traditional">Traditional</MenuItem>
-                <MenuItem value="Party Wear">Party Wear</MenuItem>
-                <MenuItem value="Summer">Summer</MenuItem>
-                <MenuItem value="Winter">Winter</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-
-          <Grid item>
-            <FormControl variant="outlined" size="small">
-              <InputLabel>Sort By</InputLabel>
-              <Select
-                value={sort}
-                onChange={(e) => setSort(e.target.value)}
-                label="Sort By"
-              >
-                <MenuItem value="default">Sort by Default</MenuItem>
-                <MenuItem value="price-low">Price: Low to High</MenuItem>
-                <MenuItem value="price-high">Price: High to Low</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
-
-        {isLoading ? (
-          <Grid container justifyContent="center" alignItems="center" sx={{ minHeight: "80vh" }}>
-            <CircularProgress />
-          </Grid>
-        ) : (
-          <>
-            {searchMessage && (
-              <Typography variant="h6" align="center" color="text.secondary" sx={{ mb: 4 }}>
-                {searchMessage}
-              </Typography>
-            )}
-
-            <Grid container spacing={2}>
-              {sortedProducts.map((product, index) => (
-                <Grid
-                  item
-                  key={index}
-                  xs={12}
-                  sm={6}
-                  md={4}
-                  lg={3}
-                  sx={{ display: "flex", justifyContent: "center" }}
-                >
-                  <Card
-                    sx={{
-                      width: "100%",
-                      maxWidth: 280,
-                      boxShadow: 3,
-                      borderRadius: 2,
-                    }}
-                  >
-                    <CardMedia
-                      component="img"
-                      image={product.images?.[0]}
-                      alt={product.name}
-                      sx={{ height: 220, objectFit: "contain" }}
-                    />
-                    <CardContent>
-                      <Typography variant="subtitle1" fontWeight="bold">
-                        {product.name}
-                      </Typography>
-                      <Typography variant="h6" color="primary" mt={1}>
-                        ₹{product.price}
-                      </Typography>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        fullWidth
-                        sx={{ mt: 2 }}
-                        onClick={() => handleBuyClick(product)}
-                      >
-                        Buy Now
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-
-            {!query.trim() && currentPage < totalPages && (
-              <Grid container justifyContent="center" sx={{ mt: 3 }}>
-                <Button variant="outlined" onClick={loadMore}>
-                  Load More
-                </Button>
-              </Grid>
-            )}
-          </>
-        )}
-      </Container>
-      <Footer />
-    </>
-  );
+      req.user = user;
+      next();
+    });
+  } catch (error) {
+    console.error("Authentication error:", error);
+    res.status(500).json({ message: "Authentication error" });
+  }
 };
 
-export default Product;
+// Admin-only middleware
+const isAdmin = (req, res, next) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+    next();
+  } catch (error) {
+    console.error("Admin check error:", error);
+    res.status(500).json({ message: "Error checking admin status" });
+  }
+};
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
+  api_key: process.env.CLOUDINARY_API_KEY,       
+  api_secret: process.env.CLOUDINARY_API_SECRET,   
+});
+
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/jpg",
+      "image/gif",
+      "image/webp",
+    ];
+    if (!allowedTypes.includes(file.mimetype)) {
+      cb(new Error("Only JPEG, PNG, JPG, GIF, and WEBP files are allowed."));
+    } else {
+      cb(null, true);
+    }
+  },
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
+
+
+router.post("/products", upload.array("images", 10), async (req, res) => {
+  try {
+    const {
+      name, description, price,
+      quantity, Catagory, brand,
+      productType // NEW: Capture productType from req.body
+    } = req.body;
+
+    if (!name || !price || !Catagory || !productType) {
+      return res.status(400).json({ error: "Required fields missing (name, price, category, productType)" });
+    }
+
+    const parseArr = (field) =>
+      Array.isArray(req.body[field])
+        ? req.body[field]
+        : typeof req.body[field] === "string"
+        ? req.body[field].split(",").map(s => s.trim()).filter(Boolean)
+        : [];
+
+    const sizes    = parseArr("size");
+    const colors   = parseArr("color");
+    const outSizes = parseArr("outSizes");
+    const outColors= parseArr("outColors");
+
+    const uploads = req.files.map(f =>
+      cloudinary.uploader.upload(
+        `data:${f.mimetype};base64,${f.buffer.toString("base64")}`,
+        { folder: "product_images" }
+      )
+    );
+    const results = await Promise.all(uploads);
+    const images  = results.map(r => r.secure_url);
+
+    const product = new ProductModel({
+      name,
+      description,
+      price,
+      size:       sizes,
+      color:      colors,
+      outSizes,
+      outColors,
+      quantity,
+      Catagory,
+      brand,
+      productType, // NEW: Save productType to DB
+      images,
+    });
+
+    const saved = await product.save();
+    res.status(201).json({ message: "Created", product: saved });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/products", async (req, res) => {
+  try {
+    const { category, brand, page, limit, productType } = req.query;
+
+    const query = {};
+    if (category && category.toLowerCase() !== "all") {
+      query.Catagory = category;
+    }
+    if (brand && brand.toLowerCase() !== "all") {
+      query.brand = brand;
+    }
+    if (productType && productType.toLowerCase() !== "all") {
+      query.productType = productType;
+    }
+
+    let productsQuery = ProductModel.find(query);
+
+    if (limit) {
+      const pageNum = parseInt(page, 10) || 1;
+      const limitNum = parseInt(limit, 10) || 10;
+      const skip = (pageNum - 1) * limitNum;
+
+      productsQuery = productsQuery
+        .skip(skip)
+        .limit(limitNum);
+    }
+
+    const products = await productsQuery;
+    const totalProducts = await ProductModel.countDocuments(query);
+    const totalPages = limit
+      ? Math.ceil(totalProducts / parseInt(limit, 10))
+      : 1;
+
+    res.json({
+      products,
+      totalProducts,
+      currentPage: limit ? parseInt(page, 10) || 1 : 1,
+      totalPages
+    });
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    res.status(500).json({ message: "Error fetching products" });
+  }
+});
+
+
+router.get("/products/:id", async (req, res) => {
+  const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid product ID" });
+  }
+  try {
+    const product = await ProductModel.findById(id);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    res.json(product);
+  } catch (error) {
+    console.error("Error fetching product:", error);
+    res.status(500).json({ message: "Error fetching product" });
+  }
+});
+
+// Only allow admin to delete products
+router.delete("/products/:id", isAdmin, async (req, res) => {
+  try {
+    // Additional security check - verify the request is coming from the admin interface
+    const referer = req.headers.referer;
+    if (!referer || !referer.includes('/admin')) {
+      return res.status(403).json({ message: "Delete operation only allowed from admin interface" });
+    }
+
+    // First find the product to get its images
+    const product = await ProductModel.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Delete images from Cloudinary
+    if (product.images && product.images.length > 0) {
+      try {
+        // Extract public IDs from Cloudinary URLs
+        const publicIds = product.images.map(url => {
+          const parts = url.split('/');
+          const filename = parts[parts.length - 1].split('.')[0];
+          return `product_images/${filename}`;
+        });
+
+        // Delete images from Cloudinary
+        await Promise.all(
+          publicIds.map(publicId =>
+            cloudinary.uploader.destroy(publicId)
+          )
+        );
+        console.log(`Successfully deleted ${publicIds.length} images from Cloudinary for product ${product._id}`);
+      } catch (cloudinaryError) {
+        console.error('Error deleting images from Cloudinary:', cloudinaryError);
+        // Continue with product deletion even if Cloudinary deletion fails
+      }
+    }
+
+    // Delete the product from MongoDB
+    await ProductModel.findByIdAndDelete(req.params.id);
+    
+    // Log the deletion
+    console.log(`Product deleted by admin ${req.user.id}: ${product._id} - ${product.name}`);
+    
+    res.status(200).json({ message: "Product deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting product:", error);
+    res.status(500).json({ message: "Error deleting product" });
+  }
+});
+
+router.post("/purchase", async (req, res) => {
+  const { productId, purchaseQty } = req.body;
+  try {
+    const product = await ProductModel.findById(productId);
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+    if (product.quantity < purchaseQty) {
+      return res.status(400).json({ error: "Insufficient stock" });
+    }
+  
+    const updatedProduct = await ProductModel.findByIdAndUpdate(
+      productId,
+      { $inc: { quantity: -purchaseQty } },
+      { new: true }
+    );
+    res.status(200).json({
+      message: "Purchase successful",
+      newQuantity: updatedProduct.quantity,
+    });
+  } catch (error) {
+    console.error("Error processing purchase:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+router.get("/recommended-products", async (req, res) => {
+  try {
+    const { category } = req.query;
+    const recommendedProducts = await ProductModel.find({ Catagory: category }).limit(5);
+    res.json(recommendedProducts);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+router.get("/products/search", async (req, res) => {
+  try {
+    const { query, category } = req.query;
+    
+    
+    const filter = {};
+    if (category) {
+      filter.Catagory = category;
+    }
+
+    const results = await ProductModel
+      .find(
+        { 
+          ...filter,
+          $text: { $search: query || "" } 
+        },
+        { score: { $meta: "textScore" } }
+      )
+      .sort({ score: { $meta: "textScore" } })
+      .limit(10)
+      .lean();
+    const formattedResults = results.map(product => ({
+      ...product,
+      id: product._id.toString(),
+      _id: product._id.toString()
+    }));
+
+    res.json(formattedResults);
+  } catch (error) {
+    console.error("Error in search:", error);
+    res.status(500).json({ message: "Error performing search" });
+  }
+});
+
+export default router;
