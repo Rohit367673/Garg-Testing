@@ -15,61 +15,48 @@ function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
-  const navigate = useNavigate();
   const searchInputRef = useRef(null);
+  const navigate = useNavigate();
+  const debounceRef = useRef(null); // for debounce
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const toggleProfile = () => setIsProfileOpen(!isProfileOpen);
 
-  // Close dropdown if clicking outside the search container
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        searchInputRef.current &&
-        !searchInputRef.current.contains(event.target)
-      ) {
+    const handleClickOutside = (e) => {
+      if (searchInputRef.current && !searchInputRef.current.contains(e.target)) {
         setShowDropdown(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSearchChange = async (e) => {
+  const handleSearchChange = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
-    if (query.trim() === "") {
-      setSearchResults([]);
-      setShowDropdown(false);
-      return;
-    }
-    try {
-      const res = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/products/search?query=${query}`
-      );
-      setSearchResults(res.data);
-      setShowDropdown(true);
-    } catch (error) {
-      console.error("Error fetching search results:", error);
-      setSearchResults([]);
-      setShowDropdown(false);
-    }
-  };
 
-  const handleSelectProduct = (product) => {
-    if (product.isViewAll) {
-      navigate(`/product?query=${encodeURIComponent(searchQuery)}`);
-    } else {
-      const productId = product._id || product.id;
-      if (productId) {
-        navigate(`/product/${productId}`);
-      } else {
-        navigate(`/product?query=${encodeURIComponent(searchQuery)}`);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    debounceRef.current = setTimeout(async () => {
+      if (query.trim() === "") {
+        setSearchResults([]);
+        setShowDropdown(false);
+        return;
       }
-    }
-    setSearchQuery("");
-    setShowDropdown(false);
+
+      try {
+        const res = await axios.get(
+          `${process.env.REACT_APP_BACKEND_URL}/products/search?query=${query}`
+        );
+        setSearchResults(res.data);
+        setShowDropdown(true);
+      } catch (err) {
+        console.error("Search error:", err);
+        setSearchResults([]);
+        setShowDropdown(false);
+      }
+    }, 300); // 300ms debounce
   };
 
   const handleSearchSubmit = (e) => {
@@ -79,6 +66,16 @@ function Header() {
       setShowDropdown(false);
       e.preventDefault();
     }
+  };
+
+  const handleSelectProduct = (product) => {
+    if (product.isViewAll) {
+      navigate(`/product?query=${encodeURIComponent(searchQuery)}`);
+    } else {
+      navigate(`/product/${product._id || product.id}`);
+    }
+    setSearchQuery("");
+    setShowDropdown(false);
   };
 
   return (
@@ -91,27 +88,13 @@ function Header() {
 
       <nav className={`menu ${isMenuOpen ? "open" : ""}`}>
         <ul className="menu-list">
-          <li>
-            <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : "")}>
-              Home
-            </NavLink>
-          </li>
-          <li>
-            <NavLink to="/product" className={({ isActive }) => (isActive ? "active" : "")}>
-              Products
-            </NavLink>
-          </li>
-          <li>
-            <NavLink to="/About" className={({ isActive }) => (isActive ? "active" : "")}>
-              About
-            </NavLink>
-          </li>
+          <li><NavLink to="/" end className={({ isActive }) => isActive ? "active" : ""}>Home</NavLink></li>
+          <li><NavLink to="/product" className={({ isActive }) => isActive ? "active" : ""}>Products</NavLink></li>
+          <li><NavLink to="/About" className={({ isActive }) => isActive ? "active" : ""}>About</NavLink></li>
           <li>
             <NavLink to="/Cart" className="cart-link">
               <FiShoppingCart className="shoppingbag" />
-              {cartItems.length > 0 && (
-                <span className="cart-count">{cartItems.length}</span>
-              )}
+              {cartItems.length > 0 && <span className="cart-count">{cartItems.length}</span>}
             </NavLink>
           </li>
         </ul>
@@ -129,10 +112,18 @@ function Header() {
           />
           <SearchRecommendation
             anchorEl={searchInputRef.current}
-            recommendedProducts={[
-              ...searchResults,
-              { id: "__view_all__", name: `View all results for "${searchQuery}"`, isViewAll: true }
-            ]}
+            recommendedProducts={
+              Array.isArray(searchResults)
+                ? [
+                    ...searchResults,
+                    {
+                      id: "__view_all__",
+                      name: `View all results for "${searchQuery}"`,
+                      isViewAll: true,
+                    },
+                  ]
+                : []
+            }
             open={showDropdown}
             onSelectProduct={handleSelectProduct}
             searchQuery={searchQuery}

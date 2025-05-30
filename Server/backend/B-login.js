@@ -21,7 +21,7 @@ import crypto from "crypto";
 import admin from "firebase-admin";
 import ReviewsModel from "./Models/Reviews.js";
 import OrderRoute from "./route/OrderHistoryRoute.js"
-
+import sendOrderEmail from "./route/OrderEmail.js"
 import EmailOtp from "./route/EmailOtp.js"
 dotenv.config();
 
@@ -55,13 +55,13 @@ app.use(
 app.use("/api", productRoutes);
 app.use("/api", sliderRoute);
 app.use("/api/orders",OrderRoute);
-
+app.use("/api", sendOrderEmail);
 app.use("/api/otp",EmailOtp)
 
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.log("MongoDB connection error:", err));
+  .catch((err) => console.log("MongoDB connection error:", err))
 
 // Payment part
 const razorpay = new Razorpay({
@@ -496,14 +496,46 @@ app.post("/google-signup", async (req, res) => {
 });
 
 
-// In your server.js (or productRoutes.js)
+
 app.get("/products/search", async (req, res) => {
   const { query } = req.query;
-  const results = await ProductModel
-    .find({ $text: { $search: query } }, { score: { $meta: "textScore" } })
-    .sort({ score: { $meta: "textScore" } })
-    .limit(10);
-  res.json(results);
+
+  console.log("🔍 Incoming search query:", query);
+
+  if (!query || query.trim() === "") {
+    console.log("⚠️ Empty search query received.");
+    return res.status(400).json({ message: "Search query is required" });
+  }
+
+  try {
+    // Step 1: Attempt text search
+    console.log("🔎 Trying $text search...");
+    let products = await ProductModel.find({ $text: { $search: query } });
+
+    console.log("📦 $text search result count:", products.length);
+
+    // Step 2: If no results, use regex fallback
+    if (products.length === 0) {
+      console.log("⛔ No results from $text. Trying regex fallback...");
+      const regex = new RegExp(query, "i");
+
+      products = await ProductModel.find({
+        $or: [
+          { name: regex },
+          { brand: regex },
+          { category: regex }
+        ]
+      });
+
+      console.log("📦 Regex search result count:", products.length);
+    }
+
+    // Step 3: Respond with result
+    res.json(products);
+  } catch (error) {
+    console.error("❌ Search error:", error);
+    res.status(500).json({ message: "Search failed", error: error.message });
+  }
 });
 
 // Optional: Recommendation endpoint based on category
@@ -548,27 +580,42 @@ app.post("/send-email", async (req, res) => {
   }
 });
 
-app.post("/admin/login", (req, res) => {
-  console.log("Admin login attempt:", req.body);
-  const { Email, Pass } = req.body;
+// Admin login route
+app.post("/admin/login", async (req, res) => {
+  try {
+    const { Email, Pass } = req.body;
+    console.log(process.env.ADMIN_EMAIL,process.env.ADMIN_PASSWORD)
+    console.log("Admin login attempt:", { Email, Pass });
 
-  const adminEmail = process.env.ADMIN_EMAIL 
-  const adminPassword = process.env.ADMIN_PASSWORD ;
+   
+    if (Email === process.env.ADMIN_EMAIL && Pass === process.env.ADMIN_PASSWORD) {
+      console.log("Admin login successful");
+      
+      
+      const token = jwt.sign(
+        { 
+          email: Email,
+          role: 'admin'
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: '24h' }
+      );
 
-  console.log("Expected admin email:", adminEmail);
-  console.log("Expected admin password:", adminPassword);
-
-  if (Email === adminEmail && Pass === adminPassword) {
-    const token = jwt.sign({ Email, role: "admin" }, process.env.JWT_SECRET, { expiresIn: "1h" });
-    console.log("Admin login successful");
-    return res.json({
-      message: "Admin login successful",
-      token,
-      user: { Email, isAdmin: true },
-    });
-  } else {
-    console.log("Invalid admin credentials");
-    return res.status(401).json({ message: "Invalid admin credentials" });
+      res.json({
+        message: "Admin login successful",
+        token,
+        user: {
+          email: Email,
+          role: 'admin'
+        }
+      });
+    } else {
+      console.log("Invalid admin credentials");
+      res.status(401).json({ message: "Invalid admin credentials" });
+    }
+  } catch (error) {
+    console.error("Admin login error:", error);
+    res.status(500).json({ message: "Error during admin login" });
   }
 });
 
@@ -589,6 +636,16 @@ app.get("/api/reviews/:productId", async (req, res) => {
     res.status(200).json(reviews);
   } catch (error) {
     res.status(500).json({ message: "Error fetching reviews", error });
+  }
+});
+
+app.get("/test-products", async (req, res) => {
+  try {
+    const products = await ProductModel.find().limit(5);
+    res.json(products);
+  } catch (err) {
+    console.error("Error fetching test products:", err);
+    res.status(500).json({ error: "Failed to fetch test products" });
   }
 });
 

@@ -24,6 +24,45 @@ const UserOrders = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const steps = ["Pending", "Approved", "Shipped", "Delivered"];
+
+  const getActiveStep = (status) => {
+    switch (status?.toLowerCase()) {
+      case "pending": return 0;
+      case "approved": return 1;
+      case "shipped": return 2;
+      case "delivered": return 3;
+      default: return 0;
+    }
+  };
+
+  // Function to send order email to owner
+  const sendOrderEmailToOwner = async (order) => {
+    try {
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/sendOrderEmail`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user: {
+            name: user.Name,
+            email: user.email,
+          },
+          order: order,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        console.log("Order email sent to owner.");
+      } else {
+        console.error("Email failed:", data.message);
+      }
+    } catch (err) {
+      console.error("Email send error:", err);
+    }
+  };
+
   useEffect(() => {
     if (!user) return;
     setLoading(true);
@@ -34,14 +73,17 @@ const UserOrders = () => {
       },
     })
       .then((res) => {
-        if (!res.ok) {
-          throw new Error("Failed to fetch orders");
-        }
+        if (!res.ok) throw new Error("Failed to fetch orders");
         return res.json();
       })
       .then((data) => {
         if (data.success) {
           setOrders(data.orders);
+
+          // Optional: Send order email for each order
+          data.orders.forEach((order) => {
+            sendOrderEmailToOwner(order);
+          });
         } else {
           setError("Failed to fetch orders.");
         }
@@ -63,24 +105,6 @@ const UserOrders = () => {
       </Box>
     );
   }
-
-  // Define the order progress steps
-  const steps = ["Pending", "Approved", "Shipped", "Delivered"];
-
-  const getActiveStep = (status) => {
-    switch (status?.toLowerCase()) {
-      case "pending":
-        return 0;
-      case "approved":
-        return 1;
-      case "shipped":
-        return 2;
-      case "delivered":
-        return 3;
-      default:
-        return 0;
-    }
-  };
 
   return (
     <>
@@ -164,11 +188,9 @@ const UserOrders = () => {
                       Status: {order.orderStatus}
                     </Typography>
                     <Divider sx={{ my: 1 }} />
-                    {/* Show Payment Method */}
                     <Typography variant="body2" color="text.secondary">
                       Payment Method: {order.paymentMethod}
                     </Typography>
-                    {/* Optionally show Payment Status if needed */}
                     <Typography variant="body2" color="text.secondary">
                       Payment: {order.paymentStatus}
                     </Typography>
@@ -176,7 +198,6 @@ const UserOrders = () => {
                       Total: ₹{order.totalAmount}
                     </Typography>
 
-                    {/* Order progress line */}
                     <Box mt={2}>
                       <Stepper activeStep={activeStep} alternativeLabel>
                         {steps.map((label) => (

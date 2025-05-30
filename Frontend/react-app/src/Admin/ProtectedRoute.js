@@ -10,12 +10,13 @@ const ProtectedRoute = ({ element, adminRequired = false }) => {
     : null;
 
   if (adminRequired) {
-   
+    // Check if user exists and has admin privileges
     if (!token || !user || !user.isAdmin) {
+      console.log("Admin access denied:", { token: !!token, user, isAdmin: user?.isAdmin });
       return <Navigate to="/Admin/Login" replace />;
     }
   } else {
-    
+    // Regular user route protection
     if (!token) {
       return <Navigate to="/Login" replace />;
     }

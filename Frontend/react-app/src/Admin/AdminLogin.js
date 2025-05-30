@@ -3,7 +3,7 @@ import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { AuthContext } from "../component/AuthContext";
-import toast from "react-hot-toast";
+import { toast } from "react-hot-toast";
 
 function AdminLogin() {
   const [Email, setEmail] = useState("");
@@ -15,20 +15,30 @@ function AdminLogin() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      console.log("Attempting admin login with:", { Email });
       const res = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/admin/login`, {
         Email,
         Pass,
       });
+      console.log("Admin login response:", res.data);
+      
       if (res.data.message === "Admin login successful") {
-
-        login(res.data.token, { ...res.data.user, isAdmin: true });
-        console.log("Admin");
-        navigate("/Admin/Product"); 
+        const userData = {
+          ...res.data.user,
+          isAdmin: true // Add isAdmin flag for ProtectedRoute
+        };
+        login(res.data.token, userData);
+        toast.success("Admin login successful!");
+        navigate("/Admin/Product");
+      } else {
+        setError(res.data.message || "Login failed");
+        toast.error(res.data.message || "Login failed");
       }
     } catch (err) {
-      setError("Admin login failed. Please check your credentials.");
-      toast.error("Admin login failed");
-      console.error(err);
+      console.error("Admin login error:", err);
+      const errorMessage = err.response?.data?.message || "Admin login failed. Please check your credentials.";
+      setError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 

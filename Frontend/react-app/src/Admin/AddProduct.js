@@ -8,6 +8,7 @@ import {
   MenuItem,
   InputLabel,
   FormControl,
+  Typography,
 } from "@mui/material";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -27,6 +28,7 @@ const AddProduct = () => {
     quantity: "",
     brand: "",
     Catagory: "",
+    productType: "",
   });
 
   // Handle field changes
@@ -45,7 +47,8 @@ const AddProduct = () => {
     e.preventDefault();
 
     // Determine stock status
-    const stockStatus = Number(product.quantity) > 0 ? "In Stock" : "Out of Stock";
+    const stockStatus =
+      Number(product.quantity) > 0 ? "In Stock" : "Out of Stock";
 
     const formData = new FormData();
     formData.append("name", product.name);
@@ -55,6 +58,7 @@ const AddProduct = () => {
     formData.append("brand", product.brand);
     formData.append("stock", stockStatus);
     formData.append("Catagory", product.Catagory);
+    formData.append("productType", product.productType);
 
     // Append in-stock sizes and colors
     product.size
@@ -87,21 +91,41 @@ const AddProduct = () => {
       await axios.post(
         `${process.env.REACT_APP_BACKEND_URL}/api/products`,
         formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
       toast.success("Product added successfully!");
-      // Optionally reset form here
+      // Reset form after successful submission
+      setProduct({
+        name: "",
+        description: "",
+        price: "",
+        images: [],
+        size: "",
+        color: "",
+        outSizes: "",
+        outColors: "",
+        quantity: "",
+        brand: "",
+        Catagory: "",
+        productType: "",
+      });
     } catch (err) {
       console.error("Error adding product:", err);
-      toast.error("Failed to add product");
+      toast.error(err.response?.data?.message || "Failed to add product");
     }
   };
 
   return (
-    <Box sx={{ m: 3 }}>
-      <h2>Add New Product</h2>
+    <Box sx={{ p: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        Add New Product
+      </Typography>
       <form onSubmit={handleSubmit}>
-        <Grid container spacing={2}>
+        <Grid container spacing={3}>
           {/* Name */}
           <Grid item xs={12}>
             <TextField
@@ -152,7 +176,25 @@ const AddProduct = () => {
               </Select>
             </FormControl>
           </Grid>
-
+           <Grid item xs={12}>
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>Product Type</InputLabel>
+            <Select
+              value={product.productType}
+              onChange={handleChange}
+              name="productType"
+              label="Product Type"
+              required
+            >
+              <MenuItem value="Casual">Casual</MenuItem>
+              <MenuItem value="Formal">Formal</MenuItem>
+              <MenuItem value="Traditional">Traditional</MenuItem>
+              <MenuItem value="Party Wear">Party Wear</MenuItem>
+              <MenuItem value="Summer">Summer Outfits</MenuItem>
+              <MenuItem value="Winter">Winter Outfits</MenuItem>
+            </Select>
+          </FormControl>
+</Grid>
           {/* In-stock Size & Color */}
           <Grid item xs={12} sm={6}>
             <TextField
@@ -226,7 +268,15 @@ const AddProduct = () => {
             />
             <Box mt={1} sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
               {product.images.map((img, i) => (
-                <Box key={i} component="img" src={URL.createObjectURL(img)} alt="Preview" width={80} height={80} sx={{ objectFit: "cover" }} />
+                <Box
+                  key={i}
+                  component="img"
+                  src={URL.createObjectURL(img)}
+                  alt="Preview"
+                  width={80}
+                  height={80}
+                  sx={{ objectFit: "cover" }}
+                />
               ))}
             </Box>
           </Grid>

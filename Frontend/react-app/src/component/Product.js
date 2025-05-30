@@ -22,58 +22,99 @@ const Product = () => {
   const [searchParams] = useSearchParams();
   const query = searchParams.get("query") || "";
   const [products, setProducts] = useState([]);
+  const [popularProducts, setPopularProducts] = useState([]);
+  const [searchMessage, setSearchMessage] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [category, setCategory] = useState("all");
+  const [productType, setProductType] = useState("all");
   const [sort, setSort] = useState("default");
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  const fetchProducts = useCallback(async (page = 1, selectedCategory = category) => {
-    setIsLoading(true);
-    try {
-      let response;
-      if (query.trim()) {
-        response = await axios.get(
-          `${process.env.REACT_APP_BACKEND_URL}/products/search`,
-          { params: { query: query.trim() } }
-        );
-        setProducts(response.data);
-        setCurrentPage(1);
-        setTotalPages(1);
-      } else {
-        response = await axios.get(
-          `${process.env.REACT_APP_BACKEND_URL}/api/products`,
-          {
-            params: {
-              page,
-              limit: 16,
-              category: selectedCategory === "all" ? "All" : selectedCategory,
-            },
-          }
-        );
-        if (page === 1) {
-          setProducts(response.data.products);
-        } else {
-          setProducts((prevProducts) => [...prevProducts, ...response.data.products]);
-        }
-        setCurrentPage(response.data.currentPage);
-        setTotalPages(response.data.totalPages);
-      }
-    } catch (error) {
-      console.error("Error fetching products:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [category, query]);
+  const fetchProducts = useCallback(
+    async (page = 1, selectedCategory = category, selectedType = productType) => {
+      setIsLoading(true);
+      try {
+        let response;
 
+        if (query.trim()) {
+          response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/products/search`, {
+            params: {
+              query: query.trim(),
+              category: selectedCategory === "all" ? undefined : selectedCategory,
+              productType: selectedType === "all" ? undefined : selectedType,
+            },
+          });
+
+          setProducts(Array.isArray(response.data) ? response.data : []);
+          setPopularProducts([]);
+          setSearchMessage(null);
+          setCurrentPage(1);
+          setTotalPages(1);
+        } else {
+          // Build filter params
+          const params = {
+            page,
+            limit: 16
+          };
+
+          // Only add filters if they are not "all"
+          if (selectedCategory !== "all") {
+            params.category = selectedCategory;
+          }
+          if (selectedType !== "all") {
+            params.productType = selectedType;
+          }
+
+          console.log('Sending filter params:', {
+            category: selectedCategory,
+            productType: selectedType,
+            params
+          });
+
+          response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products`, {
+            params,
+          });
+
+          console.log('Received products:', response.data.products.length);
+
+          if (page === 1) {
+            setProducts(response.data.products);
+          } else {
+            setProducts((prev) => [...prev, ...response.data.products]);
+          }
+          setCurrentPage(response.data.currentPage);
+          setTotalPages(response.data.totalPages);
+          setPopularProducts([]);
+          setSearchMessage(null);
+        }
+      } catch (error) {
+        console.error("Error fetching products:", error);
+        setProducts([]);
+        setSearchMessage("Error loading products. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [category, productType, query]
+  );
+
+  // Reset products when filters change
   useEffect(() => {
-    fetchProducts(1, category);
-  }, [category, query, fetchProducts]);
+    setProducts([]);
+    setCurrentPage(1);
+    fetchProducts(1, category, productType);
+  }, [category, productType, query, fetchProducts]);
+
+  // Add effect to log filter changes
+  useEffect(() => {
+    console.log('Filter state changed:', { category, productType });
+  }, [category, productType]);
 
   const loadMore = () => {
     if (currentPage < totalPages) {
-      fetchProducts(currentPage + 1, category);
+      fetchProducts(currentPage + 1, category, productType);
     }
   };
 
@@ -81,7 +122,7 @@ const Product = () => {
     if (product && (product._id || product.id)) {
       navigate(`/product/${product._id || product.id}`);
     } else {
-      console.error("Product ID is not valid:", product);
+      console.error("Invalid Product ID:", product);
     }
   };
 
@@ -95,24 +136,41 @@ const Product = () => {
     <>
       <Container className="mt-8">
         <Grid container spacing={2} sx={{ marginBottom: 3, justifyContent: "end" }}>
-          {!query.trim() && (
-            <Grid item>
-              <FormControl variant="outlined" size="small">
-                <InputLabel>Category</InputLabel>
-                <Select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  label="Category"
-                >
-                  <MenuItem value="all">All Categories</MenuItem>
-                  <MenuItem value="Mens">Mens</MenuItem>
-                  <MenuItem value="Women">Women</MenuItem>
-                  <MenuItem value="Kids">Kids</MenuItem>
-                  <MenuItem value="Accessories">Accessories</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-          )}
+          <Grid item>
+            <FormControl variant="outlined" size="small">
+              <InputLabel>Category</InputLabel>
+              <Select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                label="Category"
+              >
+                <MenuItem value="all">All Categories</MenuItem>
+                <MenuItem value="Mens">Mens</MenuItem>
+                <MenuItem value="Women">Women</MenuItem>
+                <MenuItem value="Kids">Kids</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid item>
+            <FormControl variant="outlined" size="small">
+              <InputLabel>Product Type</InputLabel>
+              <Select
+                value={productType}
+                onChange={(e) => setProductType(e.target.value)}
+                label="Product Type"
+              >
+                <MenuItem value="all">All Types</MenuItem>
+                <MenuItem value="Casual">Casual</MenuItem>
+                <MenuItem value="Formal">Formal</MenuItem>
+                <MenuItem value="Traditional">Traditional</MenuItem>
+                <MenuItem value="Party Wear">Party Wear</MenuItem>
+                <MenuItem value="Summer">Summer</MenuItem>
+                <MenuItem value="Winter">Winter</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+
           <Grid item>
             <FormControl variant="outlined" size="small">
               <InputLabel>Sort By</InputLabel>
@@ -135,6 +193,12 @@ const Product = () => {
           </Grid>
         ) : (
           <>
+            {searchMessage && (
+              <Typography variant="h6" align="center" color="text.secondary" sx={{ mb: 4 }}>
+                {searchMessage}
+              </Typography>
+            )}
+
             <Grid container spacing={2}>
               {sortedProducts.map((product, index) => (
                 <Grid
@@ -158,33 +222,20 @@ const Product = () => {
                       component="img"
                       image={product.images?.[0]}
                       alt={product.name}
-                      sx={{
-                        height: { xs: 180, sm: 200, md: 240 },
-                        objectFit: "contain",
-                      }}
+                      sx={{ height: 220, objectFit: "contain" }}
                     />
                     <CardContent>
-                      <Typography
-                        variant="subtitle1"
-                        sx={{
-                          fontWeight: "bold",
-                          fontSize: { xs: "12px", sm: "18px" },
-                        }}
-                      >
+                      <Typography variant="subtitle1" fontWeight="bold">
                         {product.name}
                       </Typography>
-                      <Typography
-                        variant="h6"
-                        color="primary"
-                        sx={{ marginTop: 1 }}
-                      >
-                        {product.price} Rs
+                      <Typography variant="h6" color="primary" mt={1}>
+                        ₹{product.price}
                       </Typography>
                       <Button
                         variant="contained"
                         color="primary"
                         fullWidth
-                        sx={{ marginTop: 2 }}
+                        sx={{ mt: 2 }}
                         onClick={() => handleBuyClick(product)}
                       >
                         Buy Now
@@ -196,7 +247,7 @@ const Product = () => {
             </Grid>
 
             {!query.trim() && currentPage < totalPages && (
-              <Grid container justifyContent="center" sx={{ marginTop: 3 }}>
+              <Grid container justifyContent="center" sx={{ mt: 3 }}>
                 <Button variant="outlined" onClick={loadMore}>
                   Load More
                 </Button>

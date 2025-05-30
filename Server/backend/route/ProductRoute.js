@@ -4,18 +4,54 @@ import ProductModel from "../Models/Product.js";
 import mongoose from "mongoose";
 import { v2 as cloudinary } from "cloudinary";
 import dotenv from "dotenv";
+import jwt from "jsonwebtoken";
 dotenv.config();
 
 const router = express.Router();
 
-// Configure Cloudinary using environment variables
+// Authentication middleware
+const authenticateToken = (req, res, next) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+      if (err) {
+        console.error("Token verification error:", err);
+        return res.status(403).json({ message: "Invalid or expired token" });
+      }
+      req.user = user;
+      next();
+    });
+  } catch (error) {
+    console.error("Authentication error:", error);
+    res.status(500).json({ message: "Authentication error" });
+  }
+};
+
+// Admin-only middleware
+const isAdmin = (req, res, next) => {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+    next();
+  } catch (error) {
+    console.error("Admin check error:", error);
+    res.status(500).json({ message: "Error checking admin status" });
+  }
+};
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
   api_key: process.env.CLOUDINARY_API_KEY,       
   api_secret: process.env.CLOUDINARY_API_SECRET,   
 });
 
-// Use multer's memory storage
 const storage = multer.memoryStorage();
 const upload = multer({
   storage,
@@ -36,20 +72,34 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-// POST /api/products - Create a new product with Cloudinary image uploads
 
 router.post("/products", upload.array("images", 10), async (req, res) => {
   try {
     const {
       name, description, price,
-      quantity, Catagory, brand
+      quantity, Catagory, brand,
+      productType // Make sure productType is captured from req.body
     } = req.body;
 
+    console.log('Received product data:', {
+      name, description, price,
+      quantity, Catagory, brand,
+      productType
+    });
+
+    // Validate required fields
     if (!name || !price || !Catagory) {
-      return res.status(400).json({ error: "Required fields missing" });
+      console.log('Missing required fields:', {
+        name: !name,
+        price: !price,
+        Catagory: !Catagory
+      });
+      return res.status(400).json({ error: "Required fields missing (name, price, category)" });
     }
 
-    // Parse array fields
+    // Set default productType if not provided
+    const finalProductType = productType || "Casual";
+
     const parseArr = (field) =>
       Array.isArray(req.body[field])
         ? req.body[field]
@@ -62,7 +112,6 @@ router.post("/products", upload.array("images", 10), async (req, res) => {
     const outSizes = parseArr("outSizes");
     const outColors= parseArr("outColors");
 
-    // Upload images
     const uploads = req.files.map(f =>
       cloudinary.uploader.upload(
         `data:${f.mimetype};base64,${f.buffer.toString("base64")}`,
@@ -83,53 +132,75 @@ router.post("/products", upload.array("images", 10), async (req, res) => {
       quantity,
       Catagory,
       brand,
+      productType: finalProductType,
       images,
     });
 
+    console.log('Creating product with data:', product);
+
     const saved = await product.save();
+    console.log('Saved product:', saved);
     res.status(201).json({ message: "Created", product: saved });
 
   } catch (err) {
-    console.error(err);
+    console.error("Error creating product:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// GET /api/products - Fetch products with optional filtering and pagination.
-
 router.get("/products", async (req, res) => {
   try {
-    const { category, brand, page, limit } = req.query;
+    const { category, brand, page, limit, productType } = req.query;
 
-    // Build the basic Mongo query
+    // First, let's log all products to see their structure
+    const allProducts = await ProductModel.find({});
+    console.log('Sample product data:', allProducts[0]);
+
     const query = {};
-    if (category && category.toLowerCase() !== "all") {
+    
+    // Handle category filter - only add if not "all"
+    if (category && category !== "all") {
       query.Catagory = category;
     }
-    if (brand && brand.toLowerCase() !== "all") {
+    
+    // Handle productType filter - only add if not "all"
+    if (productType && productType !== "all") {
+      query.productType = productType;
+    }
+    
+    // Handle brand filter - only add if not "all"
+    if (brand && brand !== "all") {
       query.brand = brand;
     }
 
-    // Start your Mongoose query
+    console.log('Filter query:', query);
+
+    // First check if we have any products matching the filters
+    const count = await ProductModel.countDocuments(query);
+    console.log(`Found ${count} products matching filters:`, query);
+
     let productsQuery = ProductModel.find(query);
 
-    // Only apply pagination if `limit` is provided
     if (limit) {
-      const pageNum  = parseInt(page, 10)  || 1;
+      const pageNum = parseInt(page, 10) || 1;
       const limitNum = parseInt(limit, 10) || 10;
-      const skip     = (pageNum - 1) * limitNum;
+      const skip = (pageNum - 1) * limitNum;
 
       productsQuery = productsQuery
         .skip(skip)
         .limit(limitNum);
     }
 
-    // Execute the query
-    const products      = await productsQuery;
-    const totalProducts = await ProductModel.countDocuments(query);
-    const totalPages    = limit
+    const products = await productsQuery;
+    const totalProducts = count;
+    const totalPages = limit
       ? Math.ceil(totalProducts / parseInt(limit, 10))
       : 1;
+
+    // Log the actual products found
+    if (products.length > 0) {
+      console.log('First product found:', products[0]);
+    }
 
     res.json({
       products,
@@ -144,7 +215,6 @@ router.get("/products", async (req, res) => {
 });
 
 
-// GET /api/products/:id - Fetch a single product by its ID.
 router.get("/products/:id", async (req, res) => {
   const { id } = req.params;
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -162,13 +232,50 @@ router.get("/products/:id", async (req, res) => {
   }
 });
 
-// DELETE /api/products/:id - Delete a product by its ID.
-router.delete("/products/:id", async (req, res) => {
+// Only allow admin to delete products
+router.delete("/products/:id", isAdmin, async (req, res) => {
   try {
-    const product = await ProductModel.findByIdAndDelete(req.params.id);
+    // Additional security check - verify the request is coming from the admin interface
+    const referer = req.headers.referer;
+    if (!referer || !referer.includes('/admin')) {
+      return res.status(403).json({ message: "Delete operation only allowed from admin interface" });
+    }
+
+    // First find the product to get its images
+    const product = await ProductModel.findById(req.params.id);
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
+
+    // Delete images from Cloudinary
+    if (product.images && product.images.length > 0) {
+      try {
+        // Extract public IDs from Cloudinary URLs
+        const publicIds = product.images.map(url => {
+          const parts = url.split('/');
+          const filename = parts[parts.length - 1].split('.')[0];
+          return `product_images/${filename}`;
+        });
+
+        // Delete images from Cloudinary
+        await Promise.all(
+          publicIds.map(publicId =>
+            cloudinary.uploader.destroy(publicId)
+          )
+        );
+        console.log(`Successfully deleted ${publicIds.length} images from Cloudinary for product ${product._id}`);
+      } catch (cloudinaryError) {
+        console.error('Error deleting images from Cloudinary:', cloudinaryError);
+        // Continue with product deletion even if Cloudinary deletion fails
+      }
+    }
+
+    // Delete the product from MongoDB
+    await ProductModel.findByIdAndDelete(req.params.id);
+    
+    // Log the deletion
+    console.log(`Product deleted by admin ${req.user.id}: ${product._id} - ${product.name}`);
+    
     res.status(200).json({ message: "Product deleted successfully" });
   } catch (error) {
     console.error("Error deleting product:", error);
@@ -176,20 +283,17 @@ router.delete("/products/:id", async (req, res) => {
   }
 });
 
-// POST /api/purchase - Update product quantity when a purchase is made.
 router.post("/purchase", async (req, res) => {
   const { productId, purchaseQty } = req.body;
   try {
-    // Retrieve the product
     const product = await ProductModel.findById(productId);
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
     }
-    // Check if sufficient stock is available
     if (product.quantity < purchaseQty) {
       return res.status(400).json({ error: "Insufficient stock" });
     }
-    // Atomically subtract the purchased quantity
+  
     const updatedProduct = await ProductModel.findByIdAndUpdate(
       productId,
       { $inc: { quantity: -purchaseQty } },
@@ -205,7 +309,7 @@ router.post("/purchase", async (req, res) => {
   }
 });
 
-// GET /api/recommended-products - Fetch recommended products based on category.
+
 router.get("/recommended-products", async (req, res) => {
   try {
     const { category } = req.query;
@@ -216,17 +320,28 @@ router.get("/recommended-products", async (req, res) => {
   }
 });
 
-// Search endpoint
+
 router.get("/products/search", async (req, res) => {
   try {
-    const { query } = req.query;
+    const { query, category } = req.query;
+    
+    
+    const filter = {};
+    if (category) {
+      filter.Catagory = category;
+    }
+
     const results = await ProductModel
-      .find({ $text: { $search: query } }, { score: { $meta: "textScore" } })
+      .find(
+        { 
+          ...filter,
+          $text: { $search: query || "" } 
+        },
+        { score: { $meta: "textScore" } }
+      )
       .sort({ score: { $meta: "textScore" } })
       .limit(10)
       .lean();
-
-    // Format the results to include both _id and id
     const formattedResults = results.map(product => ({
       ...product,
       id: product._id.toString(),
@@ -237,6 +352,23 @@ router.get("/products/search", async (req, res) => {
   } catch (error) {
     console.error("Error in search:", error);
     res.status(500).json({ message: "Error performing search" });
+  }
+});
+
+// Add this route to update existing products
+router.post("/update-product-types", async (req, res) => {
+  try {
+    // Update all products that don't have productType
+    const result = await ProductModel.updateMany(
+      { productType: { $exists: false } },
+      { $set: { productType: "casual" } } // Set a default value
+    );
+    
+    console.log('Updated products:', result);
+    res.json({ message: "Products updated successfully", result });
+  } catch (error) {
+    console.error("Error updating products:", error);
+    res.status(500).json({ message: "Error updating products" });
   }
 });
 
