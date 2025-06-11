@@ -34,7 +34,7 @@ router.post("/sendOrderEmail", async (req, res) => {
 
   const mailOptions = {
     from: "gargexclusive@gmail.com",
-    to: "rohit673367@gmail.com",
+    to: "gargexclusive@gmail.com",
     subject: `New Order from ${user.name}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
