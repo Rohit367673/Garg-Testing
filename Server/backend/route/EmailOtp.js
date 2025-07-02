@@ -1,4 +1,4 @@
-// routes/emailOtp.js
+
 import express from "express";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
@@ -6,10 +6,10 @@ dotenv.config();
 
 const router = express.Router();
 
-// In-memory store for OTPs (for demo purposes)
+
 const otpStore = {};
 
-// Endpoint to send a 4-digit OTP email
+
 router.post("/send-email-otp", async (req, res) => {
   const { email } = req.body;
   if (!email) {
@@ -18,15 +18,15 @@ router.post("/send-email-otp", async (req, res) => {
 
   // Generate a 4-digit OTP
   const otp = Math.floor(1000 + Math.random() * 9000).toString();
-  // Store OTP (in production, add an expiry)
+ 
   otpStore[email] = otp;
 
-  // Create a transporter using Gmail SMTP
+
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: process.env.GMAIL_USER, // Your Gmail address
-      pass: process.env.GMAIL_PASS, // Your Gmail app password
+      user: process.env.GMAIL_USER, 
+      pass: process.env.GMAIL_PASS, 
     },
   });
 
@@ -56,11 +56,11 @@ router.post("/send-email-otp", async (req, res) => {
   }
 });
 
-// Endpoint to verify the OTP
+
 router.post("/verify-email-otp", (req, res) => {
   const { email, otp } = req.body;
   if (otpStore[email] && otpStore[email] === otp) {
-    // Delete OTP after successful verification
+   
     delete otpStore[email];
     res.status(200).json({ message: "Email verified successfully." });
   } else {
