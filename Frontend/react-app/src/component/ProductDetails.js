@@ -313,8 +313,7 @@ const unavailableColors = product?.outColors?.map(c => c.trim()) || [];
   <strong>Stock:</strong> {product?.quantity > 0 ? "In Stock" : "Out Of Stock"}
 </Typography>
 
-
-     {/* Size Selection */}
+      {/* Size Selection */}
 {(availableSizes.length || unavailableSizes.length) > 0 && (
   <Box sx={{ mb: 2 }}>
     <Typography variant="subtitle1" gutterBottom>
@@ -326,6 +325,13 @@ const unavailableColors = product?.outColors?.map(c => c.trim()) || [];
           key={sz}
           size="small"
           variant={selectedSize === sz ? "contained" : "outlined"}
+          sx={{
+            backgroundColor: selectedSize === sz ? '#333' : '#fff',
+            color: selectedSize === sz ? '#fff' : '#222',
+            borderColor: '#333',
+            '&:hover': { backgroundColor: '#333', color: '#fff' },
+            fontWeight: 600,
+          }}
           onClick={() => setSelectedSize(sz)}
         >
           {sz.toUpperCase()}
@@ -339,8 +345,10 @@ const unavailableColors = product?.outColors?.map(c => c.trim()) || [];
           variant="outlined"
           disabled
           sx={{
-            color: "#999",
-            textDecoration: "line-through",
+            color: '#999',
+            textDecoration: 'line-through',
+            borderColor: '#ccc',
+            backgroundColor: '#f5f5f5',
           }}
         >
           {sz.toUpperCase()}
@@ -364,15 +372,12 @@ const unavailableColors = product?.outColors?.map(c => c.trim()) || [];
           sx={{
             width: 30,
             height: 30,
-            borderRadius: "50%",
+            borderRadius: '50%',
             backgroundColor: c,
-            border:
-              selectedColor === c
-                ? "2px solid #007bff"
-                : "1px solid #ccc",
-            cursor: "pointer",
-            transition: "transform 0.2s",
-            "&:hover": { transform: "scale(1.1)" },
+            border: selectedColor === c ? '2px solid #333' : '1px solid #ccc',
+            cursor: 'pointer',
+            transition: 'transform 0.2s',
+            '&:hover': { transform: 'scale(1.1)', border: '2px solid #333' },
           }}
         />
       ))}
@@ -409,31 +414,37 @@ const unavailableColors = product?.outColors?.map(c => c.trim()) || [];
 <Button
   variant="contained"
   sx={{
-    width: "100%",
-    backgroundColor: "#000",
-    color: "#fff",
+    width: '100%',
+    backgroundColor: '#222',
+    color: '#fff',
     mb: 1,
-    "&:hover": { backgroundColor: product?.quantity > 0 ? "#ff6347" : "#000" },
+    '&:hover': { backgroundColor: '#555', color: '#fff' },
+    fontWeight: 700,
+    fontSize: '1.1rem',
+    borderRadius: 2,
   }}
   disabled={product?.quantity <= 0}
   onClick={() => {
     if (product?.quantity > 0) {
       addToCartHandler();
     } else {
-      toast.error("Out of stock");
+      toast.error('Out of stock');
     }
   }}
 >
   ADD TO CART
 </Button>
-      <Link to="/cart" style={{ textDecoration: "none" }}>
+      <Link to="/cart" style={{ textDecoration: 'none' }}>
         <Button
           variant="contained"
           sx={{
-            width: "100%",
-            backgroundColor: "#000",
-            color: "#fff",
-            "&:hover": { backgroundColor: "#ff6347" },
+            width: '100%',
+            backgroundColor: '#333',
+            color: '#fff',
+            '&:hover': { backgroundColor: '#555', color: '#fff' },
+            fontWeight: 700,
+            fontSize: '1.1rem',
+            borderRadius: 2,
           }}
         >
           CHECK-OUT
@@ -512,7 +523,7 @@ const unavailableColors = product?.outColors?.map(c => c.trim()) || [];
                           width: "100%",
                           mt: 1,
                           backgroundColor: "#007bff",
-                          "&:hover": { backgroundColor: "#ff6347" },
+                          "&:hover": { backgroundColor: "#555" },
                         }}
                       >
                         Show Product

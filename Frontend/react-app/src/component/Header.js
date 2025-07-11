@@ -137,7 +137,8 @@ function Header() {
             </Link>
           ) : (
             <Link to="/account">
-              <div className="user-greeting text-orange-500">{user.Name}</div>
+              {/* Removed user name display for privacy and cleaner navbar */}
+              {/* <div className="user-greeting text-gray-700">{user.Name}</div> */}
             </Link>
           )}
         </div>

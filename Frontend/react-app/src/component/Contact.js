@@ -45,7 +45,7 @@ function Contact() {
     <>
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #ff7e5f, #feb47b)',
+          background: 'linear-gradient(135deg, #333, #555)',
           py: 4,
           textAlign: 'center',
           color: 'common.white',
@@ -142,8 +142,11 @@ function Contact() {
                   type="submit"
                   sx={{
                     py: 1.5,
-                    background: 'linear-gradient(135deg, #ff7e5f, #feb47b)',
-                    '&:hover': {         background: 'linear-gradient(135deg, #ff7e5f, #feb47b)',}
+                    backgroundColor: '#333',
+                    color: '#fff',
+                    fontWeight: 700,
+                    borderRadius: 2,
+                    '&:hover': { backgroundColor: '#555', color: '#fff' },
                   }}
                 >
                   Send Message

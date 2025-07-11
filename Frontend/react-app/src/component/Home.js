@@ -3,11 +3,15 @@ import { Link } from 'react-router-dom';
 import './Home.css';
 import Footer from './Footer';
 import axios from 'axios';
+import { Card, CardMedia, CardContent, Typography, Button, Grid, CircularProgress } from '@mui/material';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import toast from 'react-hot-toast';
 
 function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [slides, setSlides] = useState([]);
-  
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
 
   // Fetch slider images from backend on mount
   useEffect(() => {
@@ -87,6 +91,37 @@ function Home() {
     };
   }, []);
 
+  useEffect(() => {
+    // Fetch products for homepage
+    const fetchProducts = async () => {
+      try {
+        const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products?limit=12`);
+        setProducts(res.data.products || []);
+      } catch (err) {
+        setProducts([]);
+      } finally {
+        setLoadingProducts(false);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  const handleAddToCart = (product) => {
+    toast.success(`${product.name} added to cart!`, {
+      style: {
+        background: '#222',
+        color: '#fff',
+        fontWeight: 600,
+        border: '2px solid #333',
+      },
+      iconTheme: {
+        primary: '#333',
+        secondary: '#fff',
+      },
+    });
+    // Add your cart logic here
+  };
+
   return (
     <>
       <div className="slider-container" ref={sliderRef}>
@@ -116,6 +151,109 @@ function Home() {
             ></span>
           ))}
         </div>
+      </div>
+
+      {/* Product Grid Section (orange/black theme) */}
+      <div style={{ maxWidth: 1300, margin: '2.5rem auto', padding: '0 1rem' }}>
+        <h2 style={{ fontFamily: 'Playfair Display, serif', color: '#333', fontWeight: 700, fontSize: '2.2rem', marginBottom: '2rem', letterSpacing: '0.04em', textAlign: 'center', textShadow: '0 2px 8px rgba(51,51,51,0.08)' }}>Featured Products</h2>
+        {loadingProducts ? (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
+            <CircularProgress />
+          </div>
+        ) : (
+          <Grid container spacing={4}>
+            {products.map((product, idx) => (
+              <Grid item xs={12} sm={6} md={4} lg={3} key={product._id || idx}>
+                <div style={{ position: 'relative', height: '100%' }}>
+                  {/* Discount badge */}
+                  {product.oldPrice && product.oldPrice > product.price && (
+                    <div style={{
+                      position: 'absolute',
+                      top: 18,
+                      left: 18,
+                      background: '#333',
+                      color: '#fff',
+                      fontWeight: 700,
+                      fontSize: '0.95rem',
+                      borderRadius: 8,
+                      padding: '0.25em 0.8em',
+                      zIndex: 2,
+                      boxShadow: '0 2px 8px rgba(51,51,51,0.12)'
+                    }}>
+                      {Math.round(100 - (product.price / product.oldPrice) * 100)}% OFF
+                    </div>
+                  )}
+                  <Card sx={{
+                    borderRadius: 4,
+                    boxShadow: '0 4px 24px rgba(34,34,34,0.10)',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    transition: 'transform 0.25s cubic-bezier(.4,2,.6,1), box-shadow 0.25s',
+                    '&:hover': {
+                      transform: 'translateY(-8px) scale(1.03)',
+                      boxShadow: '0 8px 32px rgba(51,51,51,0.18)',
+                    },
+                  }}>
+                    <div style={{ position: 'relative' }}>
+                      <CardMedia
+                        component="img"
+                        image={product.images?.[0] || '/Images/placeholder.png'}
+                        alt={product.name}
+                        sx={{ height: 240, objectFit: 'cover', background: '#faf9f6', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
+                      />
+                      {/* Quick Add to Cart button */}
+                      <Button
+                        onClick={() => handleAddToCart(product)}
+                        sx={{
+                          position: 'absolute',
+                          bottom: 12,
+                          right: 12,
+                          minWidth: 0,
+                          width: 44,
+                          height: 44,
+                          borderRadius: '50%',
+                          background: '#333',
+                          color: '#fff',
+                          boxShadow: '0 2px 8px rgba(51,51,51,0.12)',
+                          '&:hover': { background: '#222', color: '#333' },
+                          zIndex: 2,
+                        }}
+                        aria-label="Add to cart"
+                      >
+                        <ShoppingCartIcon />
+                      </Button>
+                    </div>
+                    <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pb: 2 }}>
+                      <Typography variant="subtitle1" fontWeight="bold" sx={{ fontFamily: 'Playfair Display, serif', mb: 1, textAlign: 'center', fontSize: '1.1rem', color: '#222' }}>
+                        {product.name}
+                      </Typography>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.2rem', color: '#222' }}>
+                          ₹{product.price}
+                        </Typography>
+                        {product.oldPrice && product.oldPrice > product.price && (
+                          <Typography variant="body2" sx={{ textDecoration: 'line-through', color: '#888', fontWeight: 500, fontSize: '1rem', ml: 1 }}>
+                            ₹{product.oldPrice}
+                          </Typography>
+                        )}
+                      </div>
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        sx={{ mt: 1, borderRadius: 2, fontWeight: 600, background: '#222', color: '#fff', '&:hover': { background: '#555', color: '#fff' } }}
+                        onClick={() => window.location.href = `/product/${product._id || product.id}`}
+                      >
+                        View Details
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              </Grid>
+            ))}
+          </Grid>
+        )}
       </div>
 
       {/* Other sections of your home page remain unchanged */}

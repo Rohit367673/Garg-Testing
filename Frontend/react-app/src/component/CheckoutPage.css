@@ -84,7 +84,7 @@
 .btnC {
   width: 100%;
   padding: 12px;
-  background-color: #9C27B0;
+  background-color: #333;
   border: none;
   color: #fff;
   font-weight: bold;
@@ -95,7 +95,7 @@
 }
 
 .btnC:hover {
-  background-color: #7B1FA2;
+  background-color: #222;
 }
 
 /* Radio group styling */
@@ -145,7 +145,7 @@
 .place-order-btn {
   width: 100%;
   padding: 15px;
-  background-color: #1976d2;
+  background-color: #333;
   border: none;
   color: #fff;
   font-size: 1.1em;
@@ -161,7 +161,7 @@
 }
 
 .place-order-btn:hover:not(:disabled) {
-  background-color: #125ea6;
+  background-color: #222;
 }
 
 /* Responsive adjustments */

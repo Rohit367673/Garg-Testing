@@ -20,7 +20,7 @@ const About = () => {
       <div className="about-page">
         <section className="hero-section">
           <div className="hero-content">
-            <h1 className="animated-heading">Welcome to Garg Exclusive</h1>
+            <h1 className="animated-heading text-white">Welcome to Garg Exclusive</h1>
             <p className="animated-subtitle">
               Discover a world of achievements and multi-brand availability
               under one roof!

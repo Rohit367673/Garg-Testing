@@ -15,15 +15,18 @@ function Signup() {
   const [Email, setEmail] = useState("");
   const [Pass, setPassword] = useState("");
   const [Number, setNumber] = useState("");
-
-  // OTP state for email verification
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const submitHandle = (e) => {
     e.preventDefault();
+    setError("");
+    setSuccess("");
     if (!emailVerified) {
+      setError("Please verify your email before signing up.");
       toast.error("Please verify your email before signing up.");
       return;
     }
@@ -31,52 +34,60 @@ function Signup() {
       .post(`${process.env.REACT_APP_BACKEND_URL}/register`, { Name, Email, Pass, Number })
       .then((res) => {
         if (res.data.message === "success") {
-          const userData = { Name, Email, Number, Pass, id: res.data.id };
+          const userData = { Name, Email, Number, Pass, id: res.data.id, ProfilePic: "default-avatar.jpg" };
           login(res.data.token, userData);
           navigate("/account", { state: userData });
+          setSuccess("Registration successful!");
           toast.success("Registration successful!");
         } else {
-          console.log(res.data.message);
+          setError(res.data.message || "Registration failed!");
           toast.error(res.data.message || "Registration failed!");
         }
       })
       .catch((err) => {
-      
         const errorMessage = err.response && err.response.data && err.response.data.message
           ? err.response.data.message
           : "Registration failed!";
+        setError(errorMessage);
         toast.error(errorMessage);
       });
-      
   };
 
   const sendOtp = async () => {
+    setError("");
+    setSuccess("");
     if (!Email) {
+      setError("Please enter your email address.");
       toast.error("Please enter your email address.");
       return;
     }
     try {
       const res = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/otp/send-email-otp`, { email: Email });
+      setSuccess(res.data.message);
       toast.success(res.data.message);
       setOtpSent(true);
     } catch (error) {
-      console.error("Error sending OTP:", error);
+      setError("Failed to send OTP.");
       toast.error("Failed to send OTP.");
     }
   };
 
   const verifyOtp = async () => {
+    setError("");
+    setSuccess("");
     if (!otp) {
+      setError("Please enter the OTP.");
       toast.error("Please enter the OTP.");
       return;
     }
     try {
       const res = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/otp/verify-email-otp`, { email: Email, otp });
-      toast.success(res.data.message);
+      setSuccess(res.data.message);
       setEmailVerified(true);
+      toast.success(res.data.message);
     } catch (error) {
-      console.error("Error verifying OTP:", error);
-      toast.error(error.response.data.error || "OTP verification failed.");
+      setError(error.response?.data?.error || "OTP verification failed.");
+      toast.error(error.response?.data?.error || "OTP verification failed.");
     }
   };
 
@@ -102,7 +113,6 @@ function Signup() {
         toast.error(res.data.message || "Google Sign-Up failed!");
       }
     } catch (error) {
-      console.error("Google Sign-Up error:", error);
       toast.error("Google Sign-Up failed!");
     }
   };
@@ -112,104 +122,153 @@ function Signup() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      <form
-        className="box bg-white p-8 rounded shadow-md w-full max-w-md"
-        onSubmit={submitHandle}
-      >
-        <h1 className="text-center mb-6 text-3xl font-semibold">Sign Up</h1>
-        <div className="input mb-4 flex items-center border-b border-gray-300">
-          <FiUser className="mr-2 text-gray-600" />
-          <input
-            type="text"
-            placeholder="Enter Username"
-            required
-            value={Name}
-            onChange={(e) => setName(e.target.value)}
-            className="flex-1 py-2 outline-none"
-          />
-        </div>
-        <div className="input mb-4 flex items-center border-b border-gray-300">
-  <AiFillMail className="mr-2 text-gray-600" />
-  <input
-    type="email"
-    placeholder="Enter Email-Id"
-    required
-    value={Email}
-    onChange={(e) => {
-      setEmail(e.target.value);
-      // Reset OTP verification if email changes
-      setOtpSent(false);
-      setEmailVerified(false);
-    }}
-    className="flex-1 py-2 outline-none"
-  />
-  {!otpSent && (
-    <button type="button" onClick={sendOtp} className="ml-2 bg-blue-500 text-white px-3 py-1 rounded">
-      Send OTP
-    </button>
-  )}
-</div>
-{otpSent && !emailVerified && (
-  <div className="input mb-4 flex items-center border-b border-gray-300">
-    <input
-      type="text"
-      placeholder="Enter OTP"
-      required
-      value={otp}
-      onChange={(e) => setOtp(e.target.value)}
-      className="flex-1 py-2 outline-none"
-    />
-    <button type="button" onClick={verifyOtp} className="ml-2 bg-green-500 text-white px-3 py-1 rounded">
-      Verify OTP
-    </button>
-  </div>
-)}
-
-        <div className="input mb-4 flex items-center border-b border-gray-300">
-          <AiFillContacts className="mr-2 text-gray-600" />
-          <input
-            type="text"
-            placeholder="Enter Number"
-            required
-            value={Number}
-            onChange={(e) => setNumber(e.target.value)}
-            className="flex-1 py-2 outline-none"
-          />
-        </div>
-        <div className="input mb-6 flex items-center border-b border-gray-300 relative">
-          <AiOutlineKey className="mr-2 text-gray-600" />
-          <input
-            type={show ? "text" : "password"}
-            placeholder="Enter Password"
-            required
-            value={Pass}
-            onChange={(e) => setPassword(e.target.value)}
-            className="flex-1 py-2 outline-none"
-          />
-          <div className="eye absolute right-0 top-0 mt-3 mr-2">
-            <button type="button" onClick={() => setShow(!show)}>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 px-2">
+      <div className="w-full max-w-md bg-white/80 backdrop-blur-md rounded-2xl shadow-2xl p-8 md:p-10">
+        <h1 className="text-3xl font-bold text-center text-gray-900 mb-8 tracking-tight">Create your account</h1>
+        <form onSubmit={submitHandle} className="space-y-6">
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl">
+              <FiUser />
+            </span>
+            <input
+              type="text"
+              id="name"
+              className="peer pl-11 pr-4 py-3 w-full rounded-lg border border-gray-300 focus:border-gray-700 focus:ring-2 focus:ring-gray-700 bg-white/90 text-gray-900 placeholder-transparent transition"
+              placeholder="Username"
+              required
+              value={Name}
+              onChange={(e) => setName(e.target.value)}
+              autoComplete="username"
+            />
+            <label htmlFor="name" className="absolute left-11 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none transition-all duration-200 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-gray-700 peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 bg-white/80 px-1">
+              Username
+            </label>
+          </div>
+          <div className="relative flex gap-2">
+            <div className="flex-1 relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl">
+                <AiFillMail />
+              </span>
+              <input
+                type="email"
+                id="email"
+                className="peer pl-11 pr-4 py-3 w-full rounded-lg border border-gray-300 focus:border-gray-700 focus:ring-2 focus:ring-gray-700 bg-white/90 text-gray-900 placeholder-transparent transition"
+                placeholder="Email address"
+                required
+                value={Email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setOtpSent(false);
+                  setEmailVerified(false);
+                }}
+                autoComplete="email"
+              />
+              <label htmlFor="email" className="absolute left-11 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none transition-all duration-200 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-gray-700 peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 bg-white/80 px-1">
+                Email address
+              </label>
+            </div>
+            {!otpSent && (
+              <button type="button" onClick={sendOtp} className="ml-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-all whitespace-nowrap">
+                Send OTP
+              </button>
+            )}
+          </div>
+          {otpSent && !emailVerified && (
+            <div className="relative flex gap-2">
+              <input
+                type="text"
+                id="otp"
+                className="peer pl-4 pr-4 py-3 w-full rounded-lg border border-gray-300 focus:border-gray-700 focus:ring-2 focus:ring-gray-700 bg-white/90 text-gray-900 placeholder-gray-400 transition"
+                placeholder="Enter OTP"
+                required
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                autoComplete="one-time-code"
+              />
+              <button type="button" onClick={verifyOtp} className="ml-2 bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition-all whitespace-nowrap">
+                Verify OTP
+              </button>
+            </div>
+          )}
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl">
+              <AiFillContacts />
+            </span>
+            <input
+              type="text"
+              id="number"
+              className="peer pl-11 pr-4 py-3 w-full rounded-lg border border-gray-300 focus:border-gray-700 focus:ring-2 focus:ring-gray-700 bg-white/90 text-gray-900 placeholder-transparent transition"
+              placeholder="Phone Number"
+              required
+              value={Number}
+              onChange={(e) => setNumber(e.target.value)}
+              autoComplete="tel"
+            />
+            <label htmlFor="number" className="absolute left-11 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none transition-all duration-200 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-gray-700 peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 bg-white/80 px-1">
+              Phone Number
+            </label>
+          </div>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl">
+              <AiOutlineKey />
+            </span>
+            <input
+              type={show ? "text" : "password"}
+              id="password"
+              className="peer pl-11 pr-10 py-3 w-full rounded-lg border border-gray-300 focus:border-gray-700 focus:ring-2 focus:ring-gray-700 bg-white/90 text-gray-900 placeholder-transparent transition"
+              placeholder="Password"
+              required
+              value={Pass}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+            />
+            <label htmlFor="password" className="absolute left-11 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none transition-all duration-200 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-gray-700 peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 bg-white/80 px-1">
+              Password
+            </label>
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 text-xl focus:outline-none"
+              onClick={() => setShow(!show)}
+              tabIndex={-1}
+            >
               {show ? <FiEyeOff /> : <FiEye />}
             </button>
           </div>
+          {error && (
+            <div className="flex items-center gap-2 text-red-600 text-sm font-medium bg-red-50 border border-red-200 rounded px-3 py-2 animate-fade-in">
+              <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z" /></svg>
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="flex items-center gap-2 text-green-700 text-sm font-medium bg-green-50 border border-green-200 rounded px-3 py-2 animate-fade-in">
+              <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+              {success}
+            </div>
+          )}
+          <button
+            type="submit"
+            className="w-full py-3 rounded-lg bg-gray-900 text-white font-semibold text-lg shadow hover:bg-gray-700 transition-all focus:outline-none focus:ring-2 focus:ring-gray-700"
+            disabled={!emailVerified}
+          >
+            Sign Up
+          </button>
+        </form>
+        <div className="flex items-center my-6">
+          <div className="flex-grow border-t border-gray-300"></div>
+          <span className="mx-4 text-gray-400 font-medium">or</span>
+          <div className="flex-grow border-t border-gray-300"></div>
         </div>
-        <button
-          type="submit"
-          className="btn w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition duration-200"
-          disabled={!emailVerified} // disable sign-up until email is verified
-        >
-          Sign Up
-        </button>
-        <p className="mt-4 text-center">
-          I have an account?{" "}
-          <Link to="/login" className="text-blue-500">
-            Login
-          </Link>
-        </p>
-        <div className="flex justify-center mt-6">
-          <GoogleLogin onSuccess={handleGoogleSuccess} onError={handleGoogleFailure} />
+        <div className="flex justify-center">
+          <GoogleLogin onSuccess={handleGoogleSuccess} onError={handleGoogleFailure} width="260" shape="pill" theme="filled_black" />
         </div>
-      </form>
+        <div className="mt-8 flex flex-col items-center gap-2 text-sm">
+          <span className="text-gray-700">
+            Already have an account?{' '}
+            <Link to="/login" className="text-blue-600 hover:underline font-semibold">Login</Link>
+          </span>
+        </div>
+      </div>
     </div>
   );
 }

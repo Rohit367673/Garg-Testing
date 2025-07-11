@@ -356,12 +356,15 @@ const Cart = () => {
                     </Box>
                     <Button
                       variant="contained"
-                      color="primary"
                       fullWidth
                       sx={{
                         py: 1.5,
-                        textTransform: "none",
+                        textTransform: 'none',
                         fontWeight: 600,
+                        backgroundColor: '#222',
+                        color: '#fff',
+                        borderRadius: 2,
+                        '&:hover': { backgroundColor: '#555', color: '#fff' },
                       }}
                       onClick={handleCheckout}
                     >
