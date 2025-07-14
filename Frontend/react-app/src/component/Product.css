@@ -94,6 +94,42 @@
     .css-1qw2a80-MuiGrid-root>.MuiGrid-item {
       padding-left: 40px !important;
   }
+  
+  /* For screens up to 768px, force each Grid item to be 50% width */
+  .MuiGrid-item {
+    flex: 0 0 50% !important;
+    max-width: 50% !important;
+  }
+  /* Reduce card height on mobile */
+  .MuiCard-root {
+    height: auto !important;
+    min-height: 280px !important;
+  }
+  /* Reduce image height on mobile */
+  .MuiCardMedia-root {
+    height: 160px !important;
+    padding: 0.5rem !important;
+  }
+  /* Reduce content padding */
+  .MuiCardContent-root {
+    padding: 12px !important;
+  }
+  /* Smaller text on mobile */
+  .MuiTypography-subtitle1 {
+    font-size: 0.875rem !important;
+    line-height: 1.2 !important;
+    margin-bottom: 0.25rem !important;
+  }
+  .MuiTypography-h6 {
+    font-size: 1rem !important;
+    margin-top: 0.25rem !important;
+  }
+  /* Smaller button on mobile */
+  .MuiButton-contained {
+    padding: 6px 12px !important;
+    font-size: 0.75rem !important;
+    margin-top: 0.5rem !important;
+  }
   }
   
   @media (max-width: 480px) {
@@ -101,116 +137,147 @@
       grid-template-columns: 1fr;
     }
   }
+  
   /* For screens up to 768px, force each Grid item to be 50% width */
-@media (max-width: 768px) {
-  .MuiGrid-item {
-    flex: 0 0 50% !important;
-    max-width: 50% !important;
-  }
-  /* Override Tailwind's h-60 class (or CardMedia height) to reduce image height */
-  .h-60 {
-    height: 200px !important;
-  }
-}
-
-/* For extra-small screens, show one product per row */
-@media (max-width: 480px) {
-  .MuiGrid-item {
-    flex: 0 0 100% !important;
-    /* max-width: 100% !important; */
-  }
-  
-  .h-60 {
-    height: 180px !important;
-  }
-}
-
-.mt-8 {
-  margin-top: 2rem;
-}
-
-/* Product card hover effects */
-.MuiCard-root {
-  transition: transform 0.3s ease-in-out;
-}
-
-.MuiCard-root:hover {
-  transform: translateY(-5px);
-}
-
-/* Responsive adjustments */
-@media (max-width: 600px) {
-  .MuiContainer-root {
-    padding-left: 12px;
-    padding-right: 12px;
-  }
-  
-  .MuiGrid-container {
-    margin-left: -8px;
-    margin-right: -8px;
-  }
-  
-  .MuiGrid-item {
-    padding-left: 8px;
-    padding-right: 8px;
-  }
-}
-
-/* Loading spinner container */
-.MuiCircularProgress-root {
-  color: #333 !important;
-}
-
-/* Product image container */
-.MuiCardMedia-root {
-  background-color: #f5f5f5;
-  padding: 1rem;
-}
-
-/* Product name text */
-.MuiTypography-subtitle1 {
-  line-height: 1.2;
-  margin-bottom: 0.5rem;
-}
-
-/* Price text */
-.MuiTypography-h6 {
-  font-weight: 600 !important;
-}
-
-/* Buy Now button */
-.MuiButton-contained {
-  text-transform: none;
-  font-weight: 600;
-  padding: 8px 16px;
-}
-
-/* Load More button */
-.MuiButton-outlined {
-  text-transform: none;
-  font-weight: 500;
-  padding: 8px 24px;
-}
-
-/* Filter section styles */
-.MuiFormControl-root {
-  margin-bottom: 1rem;
-}
-
-@media (max-width: 600px) {
-  .product-page {
-    padding: 10px;
+  @media (max-width: 768px) {
+    .MuiGrid-item {
+      flex: 0 0 50% !important;
+      max-width: 50% !important;
+    }
+    /* Reduce card height on mobile */
+    .MuiCard-root {
+      height: auto !important;
+      min-height: 280px !important;
+    }
+    /* Reduce image height on mobile */
+    .MuiCardMedia-root {
+      height: 160px !important;
+      padding: 0.5rem !important;
+    }
+    /* Reduce content padding */
+    .MuiCardContent-root {
+      padding: 12px !important;
+    }
+    /* Smaller text on mobile */
+    .MuiTypography-subtitle1 {
+      font-size: 0.875rem !important;
+      line-height: 1.2 !important;
+      margin-bottom: 0.25rem !important;
+    }
+    .MuiTypography-h6 {
+      font-size: 1rem !important;
+      margin-top: 0.25rem !important;
+    }
+    /* Smaller button on mobile */
+    .MuiButton-contained {
+      padding: 6px 12px !important;
+      font-size: 0.75rem !important;
+      margin-top: 0.5rem !important;
+    }
   }
 
-  .MuiFormControl-root {
+  /* For extra-small screens, show one product per row */
+  @media (max-width: 480px) {
+    .MuiGrid-item {
+      flex: 0 0 100% !important;
+      max-width: 100% !important;
+    }
+    
+    .MuiCard-root {
+      min-height: 260px !important;
+    }
+    
+    .MuiCardMedia-root {
+      height: 140px !important;
+    }
+  }
+
+  .mt-8 {
+    margin-top: 2rem;
+  }
+
+  /* Product card hover effects */
+  .MuiCard-root {
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .MuiCard-root:hover {
+    transform: translateY(-5px);
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 600px) {
+    .MuiContainer-root {
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+    
+    .MuiGrid-container {
+      margin-left: -8px;
+      margin-right: -8px;
+    }
+    
+    .MuiGrid-item {
+      padding-left: 8px;
+      padding-right: 8px;
+    }
+  }
+
+  /* Loading spinner container */
+  .MuiCircularProgress-root {
+    color: #333 !important;
+  }
+
+  /* Product image container */
+  .MuiCardMedia-root {
+    background-color: #f5f5f5;
+    padding: 1rem;
+  }
+
+  /* Product name text */
+  .MuiTypography-subtitle1 {
+    line-height: 1.2;
     margin-bottom: 0.5rem;
   }
 
-  .MuiGrid-container {
-    margin-bottom: 1rem !important;
+  /* Price text */
+  .MuiTypography-h6 {
+    font-weight: 600 !important;
   }
 
-  .MuiSelect-select {
-    padding: 8px 14px !important;
+  /* Buy Now button */
+  .MuiButton-contained {
+    text-transform: none;
+    font-weight: 600;
+    padding: 8px 16px;
   }
-}
+
+  /* Load More button */
+  .MuiButton-outlined {
+    text-transform: none;
+    font-weight: 500;
+    padding: 8px 24px;
+  }
+
+  /* Filter section styles */
+  .MuiFormControl-root {
+    margin-bottom: 1rem;
+  }
+
+  @media (max-width: 600px) {
+    .product-page {
+      padding: 10px;
+    }
+
+    .MuiFormControl-root {
+      margin-bottom: 0.5rem;
+    }
+
+    .MuiGrid-container {
+      margin-bottom: 1rem !important;
+    }
+
+    .MuiSelect-select {
+      padding: 8px 14px !important;
+    }
+  }

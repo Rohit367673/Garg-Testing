@@ -150,7 +150,6 @@ section, .section {
   z-index: 1000;
 }
 
-
 .logo {
   width: 150px;
 }
@@ -160,7 +159,6 @@ section, .section {
   align-items: center;
   gap: 30px;
 }
-
 
 .menu-list {
   display: flex;
@@ -205,7 +203,6 @@ section, .section {
   padding: 2px 5px;
 }
 
-
 .nav-right {
   display: flex;
   align-items: center;
@@ -246,7 +243,6 @@ section, .section {
 .user-greeting {
   font-size: 14px;
   font-weight: 600;
- 
 }
 
 /* Profile Icon */
@@ -265,19 +261,25 @@ section, .section {
   border: none;
   font-size: 24px;
   cursor: pointer;
+  color: #333;
+  padding: 8px;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.menu-toggle:hover {
+  background-color: #f5f5f5;
 }
 
 /* Responsive Styles */
-
-
-
 @media (max-width: 1024px) {
   .nav {
     flex-wrap: wrap;
     padding: 10px 20px;
   }
-  .cart-count{
-    right:25px;
+  
+  .cart-count {
+    right: 25px;
   }
 
   /* Hide the horizontal menu by default; show when toggled */
@@ -286,7 +288,11 @@ section, .section {
     flex-direction: column;
     align-items: center;
     display: none;
-    margin-top: 10px;
+    margin-top: 15px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 15px 0;
   }
 
   .menu.open {
@@ -295,11 +301,41 @@ section, .section {
 
   .menu-list {
     flex-direction: column;
-    gap: 10px;
+    gap: 15px;
+    width: 100%;
+    padding: 0;
+  }
+
+  .menu-list li {
+    width: 100%;
+    text-align: center;
+  }
+
+  .menu-list li a {
+    display: block;
+    padding: 12px 20px;
+    font-size: 16px;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.3s ease;
+  }
+
+  .menu-list li:last-child a {
+    border-bottom: none;
+  }
+
+  .menu-list li a:hover {
+    background-color: #f8f8f8;
+  }
+
+  /* Center cart icon in mobile menu */
+  .menu-list li .cart-link {
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 
   .search-container input {
-    width: 10rem;
+    width: 12rem;
   }
 
   .nav-right {
@@ -321,24 +357,54 @@ section, .section {
   }
 
   .search-container input {
-    width: 10rem;
-    padding: 6px 10px;
+    width: 100%;
+    max-width: 100%;
+    padding: 8px 15px;
+    font-size: 14px;
   }
 
   .menu-list li a {
     font-size: 16px;
+    padding: 10px 15px;
   }
 
   .icon-user {
     font-size: 20px;
   }
-  .cart-count{
-    right:25px;
+  
+  .cart-count {
+    right: 25px;
   }
+  
   .btnval .login-button,
   .btnval button {
     padding: 6px 15px;
     font-size: 14px;
+  }
+  
+  .nav {
+    padding: 10px 15px;
+  }
+  
+  .nav-right {
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .search-container input {
+    max-width: 100%;
+    font-size: 13px;
+    padding: 6px 12px;
+  }
+  
+  .logo {
+    width: 100px;
+  }
+  
+  .menu-toggle {
+    font-size: 20px;
+    padding: 6px;
   }
 }
 
