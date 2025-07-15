@@ -428,7 +428,7 @@ function Home() {
         <div className="hashtag">#FuniroFashion</div>
         <div className="gallery">
           <img src="/Images/Catagory-men.jpg" alt="Cloth 1" className="img1" />
-          <img src="/Images/Screenshot-2025-01-19-at-12.40.21-PM.png" alt="Cloth 2" className="img2" />
+          <img src="/Images/97070024_1370980763087475_1040959850458120192_n.jpg" alt="Cloth 2" className="img2" />
           <img
             src="/Images/multicolor-mens-silk-embroidered-sequins-jacquard-print-indowestern-sherwani-shmambe10013-u.webp"
             alt="Cloth 3"
