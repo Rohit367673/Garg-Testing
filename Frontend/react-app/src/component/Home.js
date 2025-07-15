@@ -51,7 +51,7 @@ function Home() {
 
   const videoData = [
     { image: 'Images/WhatsApp Image 2025-01-15 at 12.20.18.jpeg', video: 'Images/video1.mp4' },
-    { image: '/Images/Screenshot 2025-01-19 at 12.40.21 PM.png', video: '/Images/video2.mp4' },
+    { image: '/Images/Screenshot-2025-01-19-at-12.40.21-PM.png', video: '/Images/video2.mp4' },
     {
       image: '/Images/4a5ff91e23e9e92b94e2435b7409edf0.jpg',
       video: '/Images/AQM2InWqEYOkSI4JJI0LGNI7qbDQM-AXM9_XgsxaZpFr2AupNqB3eUA501LziPcNZ2t4PHaa4Qj-lBjAu-dsIpWS.mp4',
