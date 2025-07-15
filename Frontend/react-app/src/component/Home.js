@@ -10,7 +10,9 @@ import toast from 'react-hot-toast';
 function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [slides, setSlides] = useState([]);
-  const [products, setProducts] = useState([]);
+  const [menProducts, setMenProducts] = useState([]);
+  const [womenProducts, setWomenProducts] = useState([]);
+  const [kidsProducts, setKidsProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
 
   // Fetch slider images from backend on mount
@@ -49,7 +51,7 @@ function Home() {
 
   const videoData = [
     { image: 'Images/WhatsApp Image 2025-01-15 at 12.20.18.jpeg', video: 'Images/video1.mp4' },
-    { image: '/Images/Screenshot 2025-01-19 at 12.40.21 PM.png', video: '/Images/video2.mp4' },
+    { image: '/Images/Screenshot 2025-01-19 at 12.40.21 PM.png', video: '/Images/video2.mp4' },
     {
       image: '/Images/4a5ff91e23e9e92b94e2435b7409edf0.jpg',
       video: '/Images/AQM2InWqEYOkSI4JJI0LGNI7qbDQM-AXM9_XgsxaZpFr2AupNqB3eUA501LziPcNZ2t4PHaa4Qj-lBjAu-dsIpWS.mp4',
@@ -92,18 +94,31 @@ function Home() {
   }, []);
 
   useEffect(() => {
-    // Fetch products for homepage
-    const fetchProducts = async () => {
+    // Fetch products by category for homepage
+    const fetchProductsByCategory = async () => {
       try {
-        const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products?limit=12`);
-        setProducts(res.data.products || []);
+        setLoadingProducts(true);
+        
+        // Fetch products for each category
+        const [menRes, womenRes, kidsRes] = await Promise.all([
+          axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products?category=Men&limit=8`),
+          axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products?category=Women&limit=8`),
+          axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/products?category=Kids&limit=8`)
+        ]);
+
+        setMenProducts(menRes.data.products || []);
+        setWomenProducts(womenRes.data.products || []);
+        setKidsProducts(kidsRes.data.products || []);
       } catch (err) {
-        setProducts([]);
+        console.error("Error fetching products:", err);
+        setMenProducts([]);
+        setWomenProducts([]);
+        setKidsProducts([]);
       } finally {
         setLoadingProducts(false);
       }
     };
-    fetchProducts();
+    fetchProductsByCategory();
   }, []);
 
   const handleAddToCart = (product) => {
@@ -120,6 +135,182 @@ function Home() {
       },
     });
     // Add your cart logic here
+  };
+
+  // Component to render product cards
+  const ProductCard = ({ product }) => (
+    <Card sx={{
+      borderRadius: 2,
+      boxShadow: '0 2px 12px rgba(34,34,34,0.08)',
+      p: 2.5,
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      minHeight: { xs: 160, sm: 180, md: 200 },
+      transition: 'transform 0.15s cubic-bezier(.4,2,.6,1), box-shadow 0.15s',
+      '&:hover': {
+        transform: 'translateY(-2px) scale(1.01)',
+        boxShadow: '0 3px 12px rgba(51,51,51,0.12)',
+      },
+    }}>
+      <div style={{ position: 'relative' }}>
+        <CardMedia
+          component="img"
+          image={product.images?.[0] || '/Images/placeholder.png'}
+          alt={product.name}
+          sx={{
+            height: { xs: 140, sm: 180, md: 220 },
+            objectFit: 'cover',
+            background: '#faf9f6',
+            borderRadius: 2,
+          }}
+        />
+      </div>
+      <CardContent sx={{
+        flexGrow: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'stretch',
+        justifyContent: 'space-between',
+        pb: 0.25,
+        px: 0.25,
+        pt: 0.25,
+        gap: 0.25,
+        '&:last-child': { pb: 0.25 },
+      }}>
+        <Typography
+          variant="body2"
+          fontWeight={600}
+          sx={{
+            fontFamily: 'Playfair Display, serif',
+            mb: 0.1,
+            textAlign: 'left',
+            fontSize: { xs: '0.6rem', sm: '0.65rem', md: '0.7rem' },
+            color: '#222',
+            lineHeight: 1.1,
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            width: '100%'
+          }}
+        >
+          {product.name}
+        </Typography>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 0 }}>
+          <Typography variant="body2" sx={{
+            fontWeight: 700,
+            fontSize: { xs: '0.65rem', sm: '0.7rem', md: '0.75rem' },
+            color: '#222',
+            width: 'auto'
+          }}>
+            ₹{product.price}
+          </Typography>
+          {product.oldPrice && product.oldPrice > product.price && (
+            <Typography variant="caption" sx={{
+              textDecoration: 'line-through',
+              color: '#888',
+              fontWeight: 500,
+              fontSize: { xs: '0.55rem', sm: '0.6rem' },
+              ml: 0.5
+            }}>
+              ₹{product.oldPrice}
+            </Typography>
+          )}
+        </div>
+        <Button
+          variant="contained"
+          size="small"
+          fullWidth
+          sx={{
+            borderRadius: 0.5,
+            fontWeight: 600,
+            background: '#222',
+            color: '#fff',
+            fontSize: { xs: '0.5rem', sm: '0.55rem' },
+            padding: { xs: '2px 0', sm: '3px 0' },
+            minHeight: { xs: '18px', sm: '22px' },
+            mt: 0.25,
+            '&:hover': { background: '#555', color: '#fff' }
+          }}
+          onClick={() => window.location.href = `/product/${product._id || product.id}`}
+        >
+          View Details
+        </Button>
+      </CardContent>
+    </Card>
+  );
+
+  // Component to render category section
+  const CategorySection = ({ title, products, category }) => {
+    // Responsive: horizontal scroll on mobile, grid on desktop
+    return (
+      <div style={{ marginBottom: '2rem' }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginBottom: '1rem',
+          padding: '0 0.5rem'
+        }}>
+          <h3 style={{ 
+            fontFamily: 'Playfair Display, serif', 
+            color: '#333', 
+            fontWeight: 700, 
+            fontSize: { xs: '1.2rem', sm: '1.4rem', md: '1.6rem' }, 
+            margin: 0,
+            textShadow: '0 2px 6px rgba(51,51,51,0.08)'
+          }}>
+            {title}
+          </h3>
+          <Link to={`/Product?category=${category}`} style={{ textDecoration: 'none' }}>
+            <Button
+              variant="outlined"
+              size="small"
+              sx={{
+                borderColor: '#333',
+                color: '#333',
+                fontWeight: 600,
+                fontSize: { xs: '0.75rem', sm: '0.8rem' },
+                '&:hover': {
+                  borderColor: '#555',
+                  background: '#333',
+                  color: '#fff'
+                }
+              }}
+            >
+              View All
+            </Button>
+          </Link>
+        </div>
+        {loadingProducts ? (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 120 }}>
+            <CircularProgress />
+          </div>
+        ) : products.length > 0 ? (
+          <div>
+            {/* Horizontal scroll on mobile, grid on desktop */}
+            <div className="product-row-scroll">
+              {products.map((product, idx) => (
+                <div className="product-row-card" key={product._id || idx}>
+                  <ProductCard product={product} />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div style={{ 
+            textAlign: 'center', 
+            padding: '2rem', 
+            color: '#888',
+            fontStyle: 'italic'
+          }}>
+            No {title.toLowerCase()} products available at the moment.
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -153,107 +344,41 @@ function Home() {
         </div>
       </div>
 
-      {/* Product Grid Section (orange/black theme) */}
+      {/* Featured Products by Category */}
       <div style={{ maxWidth: 1300, margin: '2.5rem auto', padding: '0 1rem' }}>
-        <h2 style={{ fontFamily: 'Playfair Display, serif', color: '#333', fontWeight: 700, fontSize: '2.2rem', marginBottom: '2rem', letterSpacing: '0.04em', textAlign: 'center', textShadow: '0 2px 8px rgba(51,51,51,0.08)' }}>Featured Products</h2>
-        {loadingProducts ? (
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
-            <CircularProgress />
-          </div>
-        ) : (
-          <Grid container spacing={4}>
-            {products.map((product, idx) => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={product._id || idx}>
-                <div style={{ position: 'relative', height: '100%' }}>
-                  {/* Discount badge */}
-                  {product.oldPrice && product.oldPrice > product.price && (
-                    <div style={{
-                      position: 'absolute',
-                      top: 18,
-                      left: 18,
-                      background: '#333',
-                      color: '#fff',
+        <h2 style={{ 
+          fontFamily: 'Playfair Display, serif', 
+          color: '#333', 
                       fontWeight: 700,
-                      fontSize: '0.95rem',
-                      borderRadius: 8,
-                      padding: '0.25em 0.8em',
-                      zIndex: 2,
-                      boxShadow: '0 2px 8px rgba(51,51,51,0.12)'
-                    }}>
-                      {Math.round(100 - (product.price / product.oldPrice) * 100)}% OFF
-                    </div>
-                  )}
-                  <Card sx={{
-                    borderRadius: 4,
-                    boxShadow: '0 4px 24px rgba(34,34,34,0.10)',
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    transition: 'transform 0.25s cubic-bezier(.4,2,.6,1), box-shadow 0.25s',
-                    '&:hover': {
-                      transform: 'translateY(-8px) scale(1.03)',
-                      boxShadow: '0 8px 32px rgba(51,51,51,0.18)',
-                    },
-                  }}>
-                    <div style={{ position: 'relative' }}>
-                      <CardMedia
-                        component="img"
-                        image={product.images?.[0] || '/Images/placeholder.png'}
-                        alt={product.name}
-                        sx={{ height: 240, objectFit: 'cover', background: '#faf9f6', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
-                      />
-                      {/* Quick Add to Cart button */}
-                      <Button
-                        onClick={() => handleAddToCart(product)}
-                        sx={{
-                          position: 'absolute',
-                          bottom: 12,
-                          right: 12,
-                          minWidth: 0,
-                          width: 44,
-                          height: 44,
-                          borderRadius: '50%',
-                          background: '#333',
-                          color: '#fff',
-                          boxShadow: '0 2px 8px rgba(51,51,51,0.12)',
-                          '&:hover': { background: '#222', color: '#333' },
-                          zIndex: 2,
-                        }}
-                        aria-label="Add to cart"
-                      >
-                        <ShoppingCartIcon />
-                      </Button>
-                    </div>
-                    <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pb: 2 }}>
-                      <Typography variant="subtitle1" fontWeight="bold" sx={{ fontFamily: 'Playfair Display, serif', mb: 1, textAlign: 'center', fontSize: '1.1rem', color: '#222' }}>
-                        {product.name}
-                      </Typography>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                        <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.2rem', color: '#222' }}>
-                          ₹{product.price}
-                        </Typography>
-                        {product.oldPrice && product.oldPrice > product.price && (
-                          <Typography variant="body2" sx={{ textDecoration: 'line-through', color: '#888', fontWeight: 500, fontSize: '1rem', ml: 1 }}>
-                            ₹{product.oldPrice}
-                          </Typography>
-                        )}
-                      </div>
-                      <Button
-                        variant="contained"
-                        fullWidth
-                        sx={{ mt: 1, borderRadius: 2, fontWeight: 600, background: '#222', color: '#fff', '&:hover': { background: '#555', color: '#fff' } }}
-                        onClick={() => window.location.href = `/product/${product._id || product.id}`}
-                      >
-                        View Details
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </div>
-              </Grid>
-            ))}
-          </Grid>
-        )}
+          fontSize: '2.2rem', 
+          marginBottom: '2rem', 
+          letterSpacing: '0.04em', 
+          textAlign: 'center', 
+          textShadow: '0 2px 8px rgba(51,51,51,0.08)' 
+        }}>
+          Featured Products
+        </h2>
+        
+        {/* Men's Category */}
+        <CategorySection 
+          title="Men's Collection" 
+          products={menProducts} 
+          category="Men"
+        />
+        
+        {/* Women's Category */}
+        <CategorySection 
+          title="Women's Collection" 
+          products={womenProducts} 
+          category="Women"
+        />
+        
+        {/* Kids Category */}
+        <CategorySection 
+          title="Kids Collection" 
+          products={kidsProducts} 
+          category="Kids"
+        />
       </div>
 
       {/* Other sections of your home page remain unchanged */}
@@ -303,7 +428,7 @@ function Home() {
         <div className="hashtag">#FuniroFashion</div>
         <div className="gallery">
           <img src="/Images/Catagory-men.jpg" alt="Cloth 1" className="img1" />
-          <img src="/Images/97070024_1370980763087475_1040959850458120192_n.jpg" alt="Cloth 2" className="img2 mt-12" />
+          <img src="/Images/97070024_1370980763087475_1040959850458120192_n.jpg" alt="Cloth 2" className="img2" />
           <img
             src="/Images/multicolor-mens-silk-embroidered-sequins-jacquard-print-indowestern-sherwani-shmambe10013-u.webp"
             alt="Cloth 3"
