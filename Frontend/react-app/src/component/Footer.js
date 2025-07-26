@@ -45,9 +45,7 @@ const Footer = () => {
   <Link to="https://chat.whatsapp.com/HpSfow7A3DSFC8CerHcKF6" target="_blank"><FaWhatsapp className='text-3xl cursor-pointer'/></Link>
     
   </div>
-  <div style={{ marginTop: 16, fontFamily: 'Inter, sans-serif', color: '#bfa76a', fontSize: '1rem' }}>
-    <a href="/privacy-policy" style={{ color: '#bfa76a', textDecoration: 'underline' }}>Privacy Policy</a>
-  </div>
+
 </footer>
     </>
   )
